@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="action_pdf_template_packing_list" model="ir.actions.report">
+        <field name="name">PDF Packing List Report</field>
+        <field name="model">packing.list</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">mjb_packing_list_base.report_pdf_template_packing_list</field>
+        <field name="print_report_name">'Packing_List_%s' % (object.code)</field>
+        <field name="paperformat_id" ref="mjb_packing_list_base.format_pdf_packing_list"/>
+        <field name="binding_model_id" ref="mjb_packing_list_base.model_packing_list"/>
+        <field name="binding_type">report</field>
+        <field name="binding_view_types">list,form</field>
+    </record>
+
+    <record id="report_pdf_template_packing_list" model="ir.ui.view">
+        <field name="name">report_pdf_template_packing_list</field>
+        <field name="type">qweb</field>
+        <field name="mode">primary</field>
+        <field name="arch" type="xml">
+            <t t-name="report_pdf_template_packing_list">
+                <t t-call="web.html_container">
+                    <t t-foreach="docs" t-as="o">
+                        <t t-call="mjb_packing_list_base.report_pdf_template_packing_list_document" t-lang="lang"/>
+                    </t>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

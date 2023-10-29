@@ -1,0 +1,456 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--    <xpath expr="//button[@name='mb.bsk_pl_deliver']" position="attributes">-->
+    <!--        <attribute name="groups">mb.majorbird_group</attribute>-->
+    <!--    </xpath>-->
+
+    <record id="external_packing_list_form_view" model="ir.ui.view">
+        <field name="name">packing.list</field>
+        <field name="model">packing.list</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+<!--                    <button class="btn btn-primary" type="action" name="836" string="Excel Packing List"-->
+<!--                            context="{'template':'PACKING_LIST/TEMPLATE_BSK_PACKING_LIST.xlsx'}"/>-->
+<!--                    <button class="btn btn-primary" type="action" name="836" string="Excel Brandart"-->
+<!--                            context="{'template':'PACKING_LIST/TEMPLATE_BSK_PACKING_LIST_BRANDART.xlsx'}"-->
+<!--                            attrs="{'invisible': [('customer', '!=', 4033)]}"/>-->
+<!--                    <button class="btn btn-primary" type="action" name="836" string="Excel Instructions"-->
+<!--                            context="{'template':'PACKING_LIST/TEMPLATE_BSK_PACKING_INSTRUCTIONS.xlsx','prefix':'INSTRUCTIONS-'}"/>-->
+<!--                    <button class="btn btn-primary" type="action" name="836" string="Excel Invoice"-->
+<!--                            context="{'template':'COMMERCIAL_INVOICE/TEMPLATE_BSK_COMMERCIAL_INVOICE.xlsx','prefix':'INVOICE-'}"/>-->
+<!--                    <button class="btn btn-secondary" type="action" name="748" string="Add to Packing List"-->
+<!--                            attrs="{'invisible': [('stage_id', 'in', [4,5,7])]}"/>-->
+<!--                    <button class="btn btn-secondary" type="action" name="mb.bsk_pl_deliver" string="Deliver"-->
+<!--                            attrs="{'invisible': [('stage_id', '!=', 3)]}"-->
+<!--                            confirm="Be careful, you are about to deliver the stock to the customer, are you sure ?"/>-->
+<!--                    <button class="btn btn-secondary" type="action" name="766" string="Create Invoice"-->
+<!--                            attrs="{'invisible': [('stage_id', '!=', 7)]}"/>-->
+                    <field name="stage_id" widget="statusbar" clickable="1"/>
+                </header>
+                <sheet string="Packing List">
+<!--                    <div class="oe_button_box" name="button_box">-->
+<!--                        <button class="oe_stat_button" icon="fa-file-o" type="action" name="729">-->
+<!--                            <field name="x_packing_list_id__x_iqc_report_count" string="QC Reports"-->
+<!--                                   widget="statinfo"/>-->
+<!--                        </button>-->
+<!--                        <button class="oe_stat_button" icon="fa-cubes" type="action" name="730">-->
+<!--                            <field name="x_packing_list_id__stock_picking_count" string="Deliveries"-->
+<!--                                   widget="statinfo"/>-->
+<!--                        </button>-->
+<!--                        <button class="oe_stat_button" icon="fa-balance-scale" type="action" name="767">-->
+<!--                            <field name="x_packing_list_id__account_move_count" string="Invoices"-->
+<!--                                   widget="statinfo"/>-->
+<!--                        </button>-->
+<!--                    </div>-->
+                    <field name="kanban_state" widget="state_selection"/>
+                    <widget name="web_ribbon" text="Archived" bg_color="bg-danger"
+                            attrs="{'invisible': [('active', '=', True)]}"/>
+                    <field name="active" invisible="1"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field string="BL No" force_save="1" name="name" readonly="1" placeholder="BL Number"/>
+                        </h1>
+                    </div>
+                    <field name="customer" invisible="1"/>
+                    <group name="studio_group_32ff29">
+                        <group name="studio_group_32ff29_left">
+                            <field name="customer" string="Customer"
+                                   options="{'no_create':true,'no_open':true}"/>
+                            <field name="orders" string="Orders" widget="many2many_tags"
+                                   domain="[['partner_id','=',customer]]"
+                                   options="{'no_create':true}"/>
+                            <field name="order_number" string="Order Number"/>
+                            <field name="shipping_type" string="Shipping Type"/>
+                            <field name="packing_list_type" string="Packing List Type"/>
+                            <field name="forwarder" string="Forwarder"
+                                   options="{'no_create':true,'no_open':true}"/>
+                            <field name="vessel" string="Vessel"/>
+                            <field name="container_number" string="Container number"/>
+                            <field name="container_information" string="Container information"/>
+                            <field name="goods_origin" string="Goods origin"/>
+                            <field name="shipping_marks" string="Shipping Marks"/>
+                            <field name="company_id" groups="base.group_multi_company"
+                                   options="{'no_create': True}" invisible="1"/>
+                        </group>
+                        <group name="studio_group_32ff29_right">
+                            <field name="shipper" string="Shipper"
+                                   options="{'no_create':true,'no_open':true}"/>
+                            <field name="consignee" string="Consignee"
+                                   options="{'no_create':true,'no_open':true}"/>
+<!--                            <field name="from" string="From"/>-->
+                            <field name="to" string="To"/>
+                            <field name="incoterm" string="Incoterm"
+                                   options="{'no_create':true,'no_open':true}"/>
+                            <field name="date_loading" string="Date Loading"/>
+                            <field name="date_departure" string="Date Departure"/>
+                            <field name="date_arrival" string="Date Arrival"/>
+                            <field name="invoice_number" string="Invoice Number"/>
+                            <field name="invoice_date" string="Invoice Date"/>
+                            <field name="payment_terms_id" string="Payment Terms"
+                                   options="{'no_create':true,'no_open':true}"/>
+                            <field name="bl_number" string="BL Number"/>
+                        </group>
+                    </group>
+                    <notebook name="studio_notebook_W2VnZ">
+                        <page name="studio_page_W2VnZ" string="Details">
+                            <field name="line_ids" string="Lines" limit="500"/>
+                        </page>
+                        <page name="studio_page_41BLE" string="Reality">
+<!--                              groups="mb.majorbird_group">-->
+                            <field name="line_real_ids"/>
+                        </page>
+                        <page name="studio_page_zy9kX" string="Documents">
+                            <group name="studio_group_zy9kX">
+                                <group name="studio_group_zy9kX_left">
+                                    <field filename="bl_file_filename" name="bl_file"
+                                           string="BL File"/>
+                                    <field invisible="1" name="packing_instructions_filename"/>
+                                    <field filename="packing_instructions_filename"
+                                           name="packing_instructions"/>
+                                    <field name="responsible" string="Responsible"/>
+                                    <field invisible="1" name="bl_file_filename"/>
+                                </group>
+                                <group name="studio_group_zy9kX_right">
+                                    <field name="agent" string="Agent"/>
+                                </group>
+                            </group>
+                        </page>
+<!--                        <page name="studio_page_6lFZN" string="Pictures">-->
+<!--                            <field name="attachments_ids" string="Attachments IDS"/>-->
+<!--                        </page>-->
+                        <page name="studio_page_FajyU" string="Totals">
+                            <group name="studio_group_FajyU">
+                                <group name="studio_group_FajyU_left">
+                                    <field name="total_quantity" string="Total Quantity"/>
+                                    <field name="number_cartons"/>
+                                    <field name="total_gw"/>
+                                </group>
+                                <group name="studio_group_FajyU_right">
+                                    <field name="total_cbm"/>
+                                    <field name="total_nw"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter" name="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                    <field name="activity_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="internal_packing_list_form_view" model="ir.ui.view">
+        <field name="name">packing.list</field>
+        <field name="model">packing.list</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+<!--                    <button class="btn btn-primary" type="action" name="836" string="Excel Packing List"-->
+<!--                            context="{'template':'PACKING_LIST/TEMPLATE_BSK_PACKING_LIST.xlsx'}"/>-->
+<!--                    <button class="btn btn-primary" type="action" name="836" string="Excel Brandart"-->
+<!--                            context="{'template':'PACKING_LIST/TEMPLATE_BSK_PACKING_LIST_BRANDART.xlsx'}"-->
+<!--                            attrs="{'invisible': [('customer', '!=', 4033)]}"/>-->
+<!--                    <button class="btn btn-primary" type="action" name="836" string="Excel Instructions"-->
+<!--                            context="{'template':'PACKING_LIST/TEMPLATE_BSK_PACKING_INSTRUCTIONS.xlsx','prefix':'INSTRUCTIONS-'}"/>-->
+<!--                    <button class="btn btn-primary" type="action" name="836" string="Excel Invoice"-->
+<!--                            context="{'template':'COMMERCIAL_INVOICE/TEMPLATE_BSK_COMMERCIAL_INVOICE.xlsx','prefix':'INVOICE-'}"/>-->
+<!--                    <button class="btn btn-secondary" type="action" name="748" string="Add to Packing List"-->
+<!--                            attrs="{'invisible': [('stage_id', 'in', [4,5,7])]}"/>-->
+<!--                    <button class="btn btn-secondary" type="action" name="mb.bsk_pl_deliver" string="Deliver"-->
+<!--                            attrs="{'invisible': [('stage_id', '!=', 3)]}"-->
+<!--                            confirm="Be careful, you are about to deliver the stock to the customer, are you sure ?"/>-->
+<!--                    <button class="btn btn-secondary" type="action" name="766" string="Create Invoice"-->
+<!--                            attrs="{'invisible': [('stage_id', '!=', 7)]}"/>-->
+                    <field name="stage_id" widget="statusbar" clickable="1"/>
+                </header>
+                <sheet string="Packing List">
+                    <field name="kanban_state" widget="state_selection"/>
+                    <widget name="web_ribbon" text="Archived" bg_color="bg-danger"
+                            attrs="{'invisible': [('active', '=', True)]}"/>
+                    <field name="active" invisible="1"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" required="1" placeholder="Name..."/>
+                        </h1>
+                    </div>
+                    <field name="customer" invisible="1"/>
+                    <group name="studio_group_32ff29">
+                        <group name="studio_group_32ff29_left">
+                            <field name="company_id" groups="base.group_multi_company"
+                                   options="{'no_create': True}"/>
+                        </group>
+                        <group name="studio_group_32ff29_right"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter" name="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                    <field name="activity_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="external_packing_list_tree_view" model="ir.ui.view">
+        <field name="name">packing.list.tree.view</field>
+        <field name="model">packing.list</field>
+        <field name="arch" type="xml">
+            <tree multi_edit="0">
+                <field name="company_id" invisible="1" groups="base.group_multi_company"/>
+                <field name="name"/>
+                <field name="customer"/>
+                <field name="shipping_type"/>
+<!--                <field name="from"/>-->
+                <field name="to"/>
+                <field name="date_loading"/>
+                <field name="date_departure"/>
+                <field name="date_arrival"/>
+                <field name="create_uid"/>
+                <field name="stage_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="external_packing_list_kanban_view" model="ir.ui.view">
+        <field name="name">packing.list.kanban.view</field>
+        <field name="model">packing.list</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="stage_id"
+                    default_order="priority desc, sequence asc, id desc">
+                <progressbar field="kanban_state"
+                             colors="{'normal': 'muted', 'done': 'success', 'blocked': 'danger'}"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="o_kanban_record oe_kanban_global_click o_kanban_record_has_image_fill">
+                            <div class="o_kanban_record_details">
+                                <div class="o_kanban_record_top" name="studio_auto_kanban_top">
+                                    <div class="o_kanban_record_headings" name="studio_auto_kanban_headings">
+                                        <field name="priority" widget="boolean_favorite" nolabel="1"/>
+                                        <strong class="o_kanban_record_title" name="studio_auto_kanban_title">
+                                            <field name="name"/>
+                                            <field display="full" name="customer"/>
+                                        </strong>
+                                    </div>
+                                    <div class="o_dropdown_kanban dropdown">
+                                        <a role="button" class="dropdown-toggle o-no-caret btn"
+                                           data-toggle="dropdown" data-display="static" href="#"
+                                           aria-label="Dropdown Menu" title="Dropdown Menu">
+                                            <span class="fa fa-ellipsis-v"/>
+                                        </a>
+                                        <div class="dropdown-menu" role="menu">
+                                            <a t-if="widget.editable" role="menuitem" type="edit"
+                                               class="dropdown-item">Edit
+                                            </a>
+                                            <a t-if="widget.deletable" role="menuitem" type="delete"
+                                               class="dropdown-item">Delete
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body" name="studio_auto_kanban_body"/>
+                                <div class="o_kanban_record_bottom" name="studio_auto_kanban_bottom">
+                                    <div class="oe_kanban_bottom_left" name="studio_auto_kanban_bottom_left"/>
+                                    <div class="oe_kanban_bottom_right" name="studio_auto_kanban_bottom_right">
+                                        <field name="kanban_state" widget="state_selection"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="packing_list_action" model="ir.actions.act_window">
+        <field name="name">Packing List</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">packing.list</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a Packing List
+            </p>
+        </field>
+    </record>
+
+
+    <record id="packing_list_line_search_view" model="ir.ui.view">
+        <field name="name">packing.list.line.search.view</field>
+        <field name="model">packing.list.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <separator/>
+                <filter string="Archived" name="archived_x_packing_list" domain="[['active', '=', False]]"/>
+                <separator/>
+<!--                <filter name="stage_id" string="Stage" context="{'group_by': 'stage_id'}" domain="[]"/>-->
+            </search>
+        </field>
+    </record>
+
+    <record id="packing_list_line_form_view" model="ir.ui.view">
+        <field name="name">packing.list.line.form.view</field>
+        <field name="model">packing.list.line</field>
+        <field name="arch" type="xml">
+            <form>
+                <header/>
+                <sheet string="Packing List Line">
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" required="1" placeholder="Name..."/>
+                        </h1>
+                    </div>
+                    <group name="studio_group_a15d5e">
+                        <group name="studio_group_a15d5e_left">
+                            <field name="packing_list_id" string="Packing List"/>
+                            <field name="sales_order_line_id" string="Line" options="{'no_create':true}" domain="[['order_id','in',orders]]"/>
+                            <field name="product_template_id" string="Product Template" attrs="{}"/>
+                            <field name="customer_order" string="PO#"/>
+                            <field name="carton_start" string="From"/>
+                            <field name="carton_end" string="To"/>
+                            <field name="design" string="BSK#"/>
+                            <field name="customer_code" string="REF"/>
+                            <field name="color" string="Color" optional="hide"/>
+                            <!--Quantities-->
+                            <field name="qty_per_carton" class="btn-dark" string="Qty/Ctn"/>
+                            <field name="carton_quantity" class="btn-dark" string="Ctn Qty"/>
+                            <field name="order_qty" class="btn-dark" string="Order Qty" optional="hide"/>
+                            <field name="delivered_qty" class="btn-dark" string="Delivered Qty" attrs="{}" invisible="1"/>
+                            <field name="quantity" class="btn-dark" string="Quantity"/>
+                        </group>
+                        <group name="studio_group_a15d5e_right">
+                            <!--Weights-->
+                            <field name="product_nw_kg" string="Product W." class="btn-info"/>
+                            <field name="ctn_weight_kg" string="Ctn W." class="btn-info"/>
+                            <hr/>
+                            <field name="net_weight" string="NW" class="btn-info"/>
+                            <field name="gross_weight" string="GW" class="btn-info"/>
+                            <field name="total_nw" class="btn-info"/>
+                            <field name="total_gw" class="btn-info"/>
+                            <field name="weight_unit" string="Unit" class="btn-info" domain="[['category_id.name','ilike','Weight']]" options="{'no_create':true}"/>
+                            <!--Length-->
+                            <field name="width" class="btn-success" string="Width"/>
+                            <field name="length" class="btn-success" string="Length"/>
+                            <field name="height" class="btn-success" string="Height"/>
+                            <field name="distance_unit" string="Unit" class="btn-success" domain="[['category_id.name','ilike','Length']]" options="{'no_create':true}"/>
+                            <field name="ctn_cbm" class="btn-success"/>
+                            <hr/>
+                            <!--Weight imperial-->
+                            <field name="target_net_weight" class="btn-warning" optional="hide"/>
+                            <field name="target_gross_weight" class="btn-warning" optional="hide"/>
+                            <field name="total_nw_target" class="btn-warning" optional="hide"/>
+                            <field name="total_gw_target" class="btn-warning" optional="hide"/>
+                            <field name="weight_target_unit" class="btn-warning" domain="[['category_id.name','ilike','Weight']]" optional="hide"/>
+                            <!--Length imperial-->
+                            <field name="width_target" class="btn-danger" optional="hide"/>
+                            <field name="length_target" class="btn-danger" optional="hide"/>
+                            <field name="height_target" class="btn-danger" optional="hide"/>
+                            <field name="target_distance_unit" class="btn-danger" domain="[['category_id.name','ilike','Length']]" optional="hide"/>
+                            <field name="ctn_target_cbm" class="btn-danger" optional="hide"/>
+                            <!--Other-->
+                            <field name="orders" string="Orders" widget="many2many_tags" attrs="{}" invisible="1"/>
+                            <field name="packing_list_id" attrs="{}" invisible="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="packing_list_line_tree_view" model="ir.ui.view">
+        <field name="name">packing.list.line.tree.view</field>
+        <field name="model">packing.list.line</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name" string="Remark"/>
+                <field name="sales_order_line_id" string="Line" options="{'no_create':true}"
+                       domain="[['order_id','in',orders]]"/>
+                <field name="product_template_id"
+                       attrs="{'readonly': [['sales_order_line_id','!=',False]]}"
+                       options="{'no_create':true}"/>
+                <field name="order_id_1" string="Order ID" optional="hide"/>
+                <field name="partner_id" string="Partner ID" optional="hide"/>
+                <field name="customer_order" string="PO#"/>
+                <field name="carton_start" string="From"/>
+                <field name="carton_end" string="To"/>
+                <field name="design" string="BSK#"/>
+                <field name="customer_code" string="REF"/>
+                <field name="shipping_marks" string="Shipping Marks" optional="hide"/>
+                <field name="quantity" class="btn-dark" string="Quantity" sum="Sum of Quantity"/>
+                <field name="color" string="Color" optional="hide"/>
+                <!--Quantities-->
+                <field name="qty_per_carton" class="btn-dark" string="Qty/Ctn"/>
+                <field name="carton_quantity" class="btn-dark" string="Ctn Qty" sum="Sum of Ctn Qty"/>
+                <field name="order_qty" class="btn-dark" string="Order Qty" optional="hide"/>
+                <field name="delivered_qty" class="btn-dark" string="Delivered Qty" attrs="{}" invisible="1"/>
+                <field name="carton_type_id" optional="show"/>
+                <!--Weights-->
+                <field name="product_nw_kg" string="Product W." class="btn-info" optional="show"
+                       digits="[12,3]"/>
+                <field name="ctn_weight_kg" string="Ctn W." class="btn-info" optional="show" digits="[12,3]"/>
+                <field name="net_weight" string="NW" class="btn-info" readonly="1" optional="show"
+                       digits="[12,3]"/>
+                <field name="gross_weight" string="GW" class="btn-info" readonly="1" optional="show"
+                       digits="[12,3]"/>
+                <field name="total_nw" class="btn-info" sum="Sum of Total NW" readonly="1" optional="show"
+                       digits="[12,3]"/>
+                <field name="total_gw" class="btn-info" sum="Sum of Total GW" readonly="1" optional="show"
+                       digits="[12,3]"/>
+                <field name="weight_unit" string="Unit" class="btn-info"
+                       domain="[['category_id.name','ilike','Weight']]"
+                       options="{'no_create':true}" readonly="1" optional="show"/>
+                <!--Length-->
+                <field name="width" class="btn-success" string="Width" optional="show" digits="[12,3]"/>
+                <field name="length" class="btn-success" string="Length" optional="show" digits="[12,3]"/>
+                <field name="height" class="btn-success" string="Height" optional="show" digits="[12,3]"/>
+                <field name="distance_unit" string="Unit" class="btn-success"
+                       domain="[['category_id.name','ilike','Length']]"
+                       options="{'no_create':true}" optional="show" readonly="1"/>
+                <field name="ctn_cbm" class="btn-success" string="CBM" optional="hide" readonly="1"
+                       digits="[12,3]"/>
+                <field name="total_cbm" class="btn-success" string="Total CBM" sum="Sum of Total CBM"
+                       optional="show" readonly="1" digits="[12,3]"/>
+                <field name="width_target" class="btn-danger" optional="hide" digits="[12,3]"/>
+                <field name="length_target" class="btn-danger" optional="hide" digits="[12,3]"/>
+                <field name="height_target" class="btn-danger" optional="hide" digits="[12,3]"/>
+                <field name="target_distance_unit" class="btn-danger"
+                       domain="[['category_id.name','ilike','Length']]" optional="hide"
+                       readonly="1"/>
+                <field name="orders" string="Orders" widget="many2many_tags" attrs="{}" invisible="1"/>
+                <field name="packing_list_id" attrs="{}" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="packing_list_line_search_view" model="ir.ui.view">
+        <field name="name">packing.list.line.search.view</field>
+        <field name="model">packing.list.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="packing_list_line_action" model="ir.actions.act_window">
+        <field name="name">Packing List Line</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">packing.list.line</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a Packing List Line.
+            </p>
+        </field>
+    </record>
+
+</odoo>

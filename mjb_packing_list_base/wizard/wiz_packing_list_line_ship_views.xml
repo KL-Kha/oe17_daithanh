@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="wiz_packing_list_line_ship_form_view" model="ir.ui.view">
+        <field name="name">wiz.packing.list.line.ship.form.view</field>
+        <field name="model">wiz.packing.list.line.ship</field>
+        <field name="arch" type="xml">
+            <form string="Ship goods">
+                <h4>When you click confirm, it will add lines to the delivered list.</h4>
+                <group>
+                    <field name="name" invisible="1"/>
+                    <field name="packing_list_line_id" string="Packing List line" readonly="1" invisible="1"/>
+                    <field name="product_tmpl_id" string="Product"/>
+                    <field name="quantity" string="Quantity"/>
+                </group>
+                <!--<field name="order_line_ids" domain="[('order_id','=',order_id)]">-->
+                <!--  <tree string="Sales Order Lines" create="false">-->
+                <!--    <field name="order_id"/>-->
+                <!--    <field name="name"/>-->
+                <!--    <field name="product_uom_qty" string="Qty"/>-->
+                <!--    <field name="price_unit" string="Price"/>-->
+                <!--    <field name="price_subtotal" sum="Total" widget="monetary"/>-->
+                <!--    <field name="currency_id" invisible="1"/>-->
+                <!--</tree>-->
+                <!--</field>-->
+                <footer>
+<!--                    <button name="mb.bsk_pl_line_ship_confirm" string="Confirm" type="action" class="btn-primary"/>-->
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="wiz_packing_list_line_ship_action" model="ir.actions.act_window">
+        <field name="name">Sale to Picking</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">wiz.packing.list.line.ship</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="wiz_packing_list_line_ship_form_view"/>
+        <field name="target">new</field>
+    </record>
+
+    <!-- <menuitem id="wiz_packing_list_line_ship_menu"
+              name="Purchase to Packing"
+              action="wiz_packing_list_line_ship_action"
+              parent="packing_list_sheet_menu"
+              sequence="0"/> -->
+
+</odoo>

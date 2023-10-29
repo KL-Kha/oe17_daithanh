@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_packing_list_stage,access_packing_list_stage,model_packing_list_stage,base.group_user,1,1,1,1
+access_packing_list,access_packing_list,model_packing_list,base.group_user,1,1,1,1
+access_packing_list_line,access_packing_list_line,model_packing_list_line,base.group_user,1,1,1,1
+access_add_to_packing_list_wizard,access_add_to_packing_list_wizard,model_add_to_packing_list_wizard,base.group_user,1,1,1,1
+access_so_to_packing_list_wizard,access_so_to_packing_list_wizard,model_so_to_packing_list_wizard,base.group_user,1,1,1,1
+access_wiz_packing_list_line_ship,access_wiz_packing_list_line_ship,model_wiz_packing_list_line_ship,base.group_user,1,1,1,1
+access_wiz_purch_to_packing,access_wiz_purch_to_packing,model_wiz_purch_to_packing,base.group_user,1,1,1,1

@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_x_mjb_pll_carton_type" model="ir.actions.server">
+        <field name="name">MJB - Action PLL | onChange | Carton Type</field>
+        <field name="model_id" ref="mjb_packing_list_base.model_packing_list_line"/>
+        <field name="state">code</field>
+        <field name="code">
+def computeDimensions(r):
+  ctn = r.ctn_type_id
+  if not ctn:
+    return {}
+  
+  ctnWeight = ctn.weight or 0.0
+  ctnW = ctn.width or 0.0
+  ctnH = ctn.height or 0.0
+  ctnL = ctn.length or 0.0
+  
+  rateW = 1
+  
+  rateL = 1
+  
+  rateTargetL = 1
+  
+  rateTargetW = 1
+  
+  rateTargetImperial = 1
+  
+  return {
+    'ctn_weight': ctnWeight * rateW * rateTargetW,
+    'ctn_cbm': ctnW * ctnH * ctnL,
+    'width': ctnW * rateL * rateTargetL,
+    'height': ctnH * rateL * rateTargetL,
+    'length': ctnL * rateL * rateTargetL,
+    'qty_per_carton': ctn.cbm,
+    'target_width': ctnW * rateL * rateTargetImperial,
+    'target_height': ctnH * rateL * rateTargetImperial,
+    'target_length': ctnL * rateL * rateTargetImperial
+  }
+
+record.update(computeDimensions(record))
+        </field>
+    </record>
+        <record id="action_x_mjb_pll_onchange_sale_order_line" model="ir.actions.server">
+        <field name="name">MJB - Action PLL | onChange | Sale Order Line</field>
+        <field name="model_id" ref="mjb_packing_list_base.model_packing_list_line"/>
+        <field name="state">code</field>
+        <field name="code">
+def computeDefaultPallet(r,product):
+  # raise(Warning("test"))
+  vals = {}
+  customer = r.order_line_id.order_id.partner_id
+  if not customer:
+    customer = r.packing_list_id.customer
+  
+  if not product:
+    return {}
+  
+  custCode = False
+  if product.carton_ids:
+    for l in product.carton_ids:
+      if l.type == "pallet":
+        if customer:
+          if l.partner_id.id == customer.id:
+            custCode = l
+        else:
+          custCode = False
+  
+  if custCode:
+    
+    defaultPallet = custCode
+    if defaultPallet:
+      vals['type_pallet_id'] = defaultPallet.id
+
+  return vals
+
+
+def computeDefaultCarton(r,product):
+  vals = {}
+  customer = r.order_line_id.order_id.partner_id
+  if not customer:
+    customer = r.packing_list_id.customer
+  if not product:
+    return {}
+  
+  custCode = False
+  if product.carton_ids:
+    for l in product.carton_ids:
+      if l.type == "carton":
+        if customer:
+          if l.partner_id.id == customer.id:
+            custCode = l
+        else:
+          custCode = False
+  
+  orderQty = (r.order_line_id.product_uom_qty or 0.0)
+  orderRemainingQty = (r.order_line_id.remaining_qty or 0.0)
+  vals['quantity'] = orderQty
+  vals['order_remaining_qty'] = orderRemainingQty
+  
+  if custCode:
+    
+    defaultCtn = custCode
+    if defaultCtn:
+      vals['ctn_type_id'] = defaultCtn.id
+    
+    defaultQtyPerCtn = custCode.cbm or 0.0
+    ctnQty = 0
+    if defaultQtyPerCtn:
+      ctnQty = int(orderQty / defaultQtyPerCtn) + (orderQty % defaultQtyPerCtn > 0)
+      vals['qty_per_carton'] = defaultQtyPerCtn
+      vals['carton_quantity'] = ctnQty
+    
+    vals['carton_start'] = str(0)
+    vals['carton_end'] = str(ctnQty)
+  
+  productWeight = product.weight or 0.0
+  productWeightUom = False
+  
+  rateW = 1
+  
+  rateTargetW = 1
+  
+  if productWeight:
+    vals['product_net_weight'] = productWeight * rateW * rateTargetW
+  
+  vals['order_ref'] = r.order_line_id.order_id.studio_customer_po_number or ""
+  vals['product_id'] = r.order_line_id.product_id.id
+  vals['description_text'] = r.order_line_id.name
+  return vals
+
+
+if record.order_line_id.product_id.product_tmpl_id:
+  record.update(computeDefaultCarton(record,  record.order_line_id.product_id.product_tmpl_id))
+  record.update(computeDefaultPallet(record,  record.order_line_id.product_id.product_tmpl_id))
+        </field>
+    </record>
+        <record id="action_x_mjb_pll_nwgw_change" model="ir.actions.server">
+        <field name="name">MJB - Action PLL | onChange | NW/GW</field>
+        <field name="model_id" ref="mjb_packing_list_base.model_packing_list_line"/>
+        <field name="state">code</field>
+        <field name="code">
+def computeWeights(r):
+  ctnWeight = r.ctn_weight or 0.0
+  productWeight = r.product_net_weight or 0.0
+  palletWeight = r.pallet_net_weight or 0.0
+  
+  qty = r.quantity or 0.0
+  qtyPerCtn = r.qty_per_carton or 0.0
+  ctnQty = r.carton_quantity or 0.0
+  palletQty = r.pallet_qty or 0.0
+  
+  nw = qtyPerCtn * productWeight
+  gw = qtyPerCtn * productWeight + ctnWeight
+  
+  nw_total = productWeight * qty
+  gw_total = nw_total + ctnWeight * ctnQty + palletWeight * palletQty
+  
+  return {
+    'net_weight': nw,
+    'gross_weight': gw,
+    'total_net_weight': nw_total,
+    'total_gross_weight': gw_total
+  }
+
+
+record.update(computeWeights(record))
+        </field>
+    </record>
+        <record id="action_x_mjb_pll_onchange_carton_cbm" model="ir.actions.server">
+        <field name="name">MJB - Action PLL | onChange | Carton CBM</field>
+        <field name="model_id" ref="mjb_packing_list_base.model_packing_list_line"/>
+        <field name="state">code</field>
+        <field name="code">
+def computeWeights(r):
+  w = r.width or 0.0
+  l = r.length or 0.0
+  h = r.height or 0.0
+  ctnQty = r.carton_quantity or 0.0
+  
+  rateTargetL = 1/100
+
+  cbm = w * l * h * rateTargetL * rateTargetL * rateTargetL
+  cbm_total = cbm * ctnQty
+  
+  rateTargetImperial = 1
+
+  return {
+    'ctn_cbm': cbm,
+    'ctn_total_cbm': cbm_total
+  }
+
+
+record.update(computeWeights(record))
+        </field>
+    </record>
+
+    <record id="action_x_mjb_pll_onchange_quantities" model="ir.actions.server">
+        <field name="name">MJB - Action PLL | onChange | Quantities</field>
+        <field name="model_id" ref="mjb_packing_list_base.model_packing_list_line"/>
+        <field name="state">code</field>
+        <field name="code">
+def computeQuantities(r):
+  qtyPerCtn = r.qty_per_carton or 0.0
+  quantity = r.quantity or 0.0
+  
+  # quantity = qtyPerCtn * ctnQty
+  if qtyPerCtn > 0:
+    ctnQty = int(quantity / qtyPerCtn) + (quantity % qtyPerCtn > 0)
+    return {
+      'carton_quantity': ctnQty
+    }
+  return {}
+
+# def main(record):
+#   vals = {}
+#   vals.update(computeQuantities(record))
+#   return vals
+
+record.update(computeQuantities(record))
+        </field>
+    </record>
+
+    <record id="action_x_mjb_pll_onchange_pallet_cbm" model="ir.actions.server">
+        <field name="name">MJB - Action PLL | onChange | Pallet CBM</field>
+        <field name="model_id" ref="mjb_packing_list_base.model_packing_list_line"/>
+        <field name="state">code</field>
+        <field name="code">
+def computePalletCBM(r):
+
+  w = r.pallet_width or 0.0
+  l = r.pallet_length or 0.0
+  h = r.pallet_height or 0.0
+  palletQty = r.pallet_qty or 0.0
+  
+  rateTargetL = 1/100
+
+  cbm = w * l * h * rateTargetL * rateTargetL * rateTargetL
+  cbm_total = cbm * palletQty
+
+  rateTargetImperial = 1
+  
+  return {
+    'pallet_cbm': cbm,
+    'pallet_total_cbm': cbm_total
+  }
+      
+
+record.update(computePalletCBM(record))
+        </field>
+    </record>
+
+        <record id="action_x_mjb_pll_onchange_pallet_type" model="ir.actions.server">
+        <field name="name">MJB - Action PLL | onChange | Pallet Type</field>
+        <field name="model_id" ref="mjb_packing_list_base.model_packing_list_line"/>
+        <field name="state">code</field>
+        <field name="code">
+def computePalletDimensions(r):
+  pallet = r.type_pallet_id
+  if not pallet:
+    return {}
+  
+  palletWeight = pallet.weight or 0.0
+  palletW = pallet.width or 0.0
+  palletH = pallet.height or 0.0
+  palletL = pallet.length or 0.0
+  
+  rateW = 1
+  # if ctn.studio_weight_uom:
+  #   if ctn.studio_weight_uom.factor > 0:
+  #     rateW = 1/ctn.studio_weight_uom.factor
+  
+  rateL = 1
+  # if ctn.studio_uom_id:
+  #   if ctn.studio_uom_id.factor > 0:
+  #     rateL = 1/ctn.studio_uom_id.factor
+  
+  rateTargetL = 1
+  # if record.studio_distance_unit:
+  #   if record.studio_distance_unit.factor > 0:
+  #     rateTargetL = record.studio_distance_unit.factor
+  
+  rateTargetW = 1
+  # if record.studio_weight_unit:
+  #   if record.studio_weight_unit.factor > 0:
+  #     rateTargetW = record.studio_weight_unit.factor
+  
+  rateTargetImperial = 1
+  # if record.studio_target_distance_unit:
+  #   if record.studio_target_distance_unit.factor > 0:
+  #     rateTargetImperial = record.studio_target_distance_unit.factor
+  
+  return {
+    'pallet_net_weight': palletWeight * rateW * rateTargetW,
+    # 'pallet_cbm': palletW * palletH * palletL,
+    'pallet_width': palletW * rateL * rateTargetL,
+    'pallet_height': palletH * rateL * rateTargetL,
+    'pallet_length': palletL * rateL * rateTargetL
+  }
+
+
+record.update(computePalletDimensions(record))
+        </field>
+    </record>
+
+        <record id="action_x_mjb_pll_onchange_total_cbm" model="ir.actions.server">
+        <field name="name">MJB - Action PLL | onChange | Total CBM</field>
+        <field name="model_id" ref="mjb_packing_list_base.model_packing_list_line"/>
+        <field name="state">code</field>
+        <field name="code">
+def computeTotalCBM(r):
+  palletTotalCBM = r.pallet_total_cbm or 0.0
+  cartonTotalCBM = r.ctn_total_cbm or 0.0
+  if palletTotalCBM:
+    return {
+      'total_cbm': palletTotalCBM
+    }
+  else:
+    return {
+      'total_cbm': cartonTotalCBM
+    }
+
+
+record.update(computeTotalCBM(record))
+        </field>
+    </record>
+
+</odoo>

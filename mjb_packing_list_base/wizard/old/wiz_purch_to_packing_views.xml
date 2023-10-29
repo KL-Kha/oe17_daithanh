@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="wiz_purch_to_packing_form_view" model="ir.ui.view">
+        <field name="name">wiz.purch.to.packing.form.view</field>
+        <field name="model">wiz.purch.to.packing</field>
+        <field name="arch" type="xml">
+            <form string="Ship goods">
+                <h4>When you click confirm, it will add lines to the delivered list.</h4>
+                <group>
+                    <field name="name" invisible="1"/>
+                    <field name="sheet_id" readonly="1"/>
+<!--                    <field name="packing_list_type" required="1"/>-->
+                    <field name="packing_list_id" options="{'no_create': True}"/>
+<!--                           domain="[('packing_list_type','=',packing_list_type),('stage_id','=', 1)]"/>-->
+                </group>
+<!--                <field name="sheet_line_ids"-->
+<!--                       domain="[('production_sheet_id','=',sheet_id),('product_id','!=', False),('section_id','!=',False)]">-->
+<!--                    <tree string="Purchasing sheet lines" create="false">-->
+<!--                        <field name="production_sheet_id"/>-->
+<!--                        <field name="product_id"/>-->
+<!--                        <field name="production_quantity_total"/>-->
+<!--                        <field name="uom_id"/>-->
+<!--                    </tree>-->
+<!--                </field>-->
+                <footer>
+<!--                    <button name="mb.bsk_ps_to_pl_confirm" string="Confirm" type="action" class="btn-primary"/>-->
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_make_po_wiz_action" model="ir.actions.act_window">
+        <field name="name">Purchase to Picking</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">wiz.purch.to.packing</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="wiz_purch_to_packing_form_view"/>
+        <field name="target">new</field>
+    </record>
+<!-- 
+    <menuitem id="view_make_po_wiz_menu"
+              name="Purchase to Packing"
+              action="view_make_po_wiz_action"
+              parent="packing_list_sheet_menu"
+              sequence="0"/> -->
+
+</odoo>

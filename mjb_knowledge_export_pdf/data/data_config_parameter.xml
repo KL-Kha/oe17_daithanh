@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="x_mjb_knowledge_default_report" model="ir.config_parameter">
+        <field name="key">knowledge.article.default.report</field>
+        <field name="value">1</field>
+    </record>
+</odoo>

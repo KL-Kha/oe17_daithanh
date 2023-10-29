@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<record id="custom_invoice_auto_pl" model="ir.actions.server">
+        <field name="name">Invoice PL</field>
+        <field name="model_id" ref="model_packing_list"/>
+        <field name="state">code</field>
+        <field name="code">
+def alert(m):
+    raise(UserError(str(m)))
+
+def validate(packingList):
+    if not packingList:
+        alert("You must select a packing list first")
+    
+    if not packingList.customer:
+        alert("You must select a customer first")
+    
+    if not packingList.company_id:
+        alert("You must select a company first")
+    
+    journal = env['account.journal'].search([('type','=','sale'),('company_id','=',packingList.company_id.id)])
+    if not journal:
+        alert("No journal found")
+    
+    if len(packingList.orders) == 0:
+        alert("You must have at least one order")
+    
+    currency_id = False
+    for o in packingList.orders:
+        if not currency_id:
+            currency_id = o.currency_id
+        if o.currency_id.id != currency_id.id:
+            alert("All orders must be of the same currency")
+    if not currency_id:
+        alert("No currency")
+    
+    if len(packingList.line_ids) == 0:
+        alert("You must have at least one line")
+    
+    orderIds = [o.id for o in packingList.orders]
+    for l in packingList.line_ids:
+        if not l.order_line_id:
+            alert("You must have selected order lines on each packing list line")
+        
+        if l.quantity == 0:
+            alert("You must have positive quantities on each lines")
+        
+        if l.order_line_id.state not in ['done','sale']:
+            alert("You can only invoice confirmed sales orders")
+        
+        if l.order_line_id.order_id.id not in orderIds:
+            alert("Line %s from order %s is not in the selected orders" % (str(l.order_line_id.name),str(l.order_line_id.order_id.name)))
+    
+    return True
+
+# Create invoice
+def createInvoice(packingList):
+    journal = env['account.journal'].search([('type','=','sale'),('company_id','=',packingList.company_id.id)])
+    orders = packingList.orders
+    lines = packingList.line_ids
+    currency_id = orders[0].currency_id
+    salespersonId = orders[0].user_id.id
+    salesTeamId = orders[0].team_id.id
+    invoiceLines = genInvoiceLines(packingList)
+    
+
+    if len(invoiceLines) == 0:
+        alert("Nothing to invoice !")
+    # alert(invoiceLines)
+
+    shippingId = packingList.delivery_address.id
+    # if packingList.partner_id:
+    #     partner = packingList.partner_id
+    #     for c in partner.child_ids:
+    #         if c.type == 'delivery':
+    #             shippingId = c.id
+    
+    return env['account.move'].create({
+        'invoice_incoterm_id': packingList.incoterm.id,
+        # 'studio_etd_date': packingList.studio_date_departure,
+        # 'studio_eta_date_1': packingList.studio_date_arrival,
+        # 'studio_shipping_type': packingList.studio_shipping_type or "",
+        # 'payment_reference': packingList.studio_order_number or "",
+        'partner_id': packingList.customer.id,
+        'partner_shipping_id': shippingId,
+        'journal_id': journal.id,
+        # 'studio_fsc_required': 'no',
+        # 'studio_transport_number': packingList.name,
+        # 'studio_container_number': packingList.studio_container_number,
+        # 'studio_order_number': packingList.studio_order_number,
+        # 'studio_shipping_marks': packingList.studio_shipping_marks,
+        # 'studio_consignee': packingList.studio_consignee.id,
+
+        # 'studio_number_cartons': packingList.number_cartons or 0.0,
+        # 'studio_total_nw': packingList.total_nw,
+        # 'studio_total_gw': packingList.total_gw,
+        # 'studio_total_cbm': packingList.total_cbm,
+        # 'studio_from': packingList.studio_from.id,
+        # 'studio_to': packingList.studio_to.id,
+        # 'studio_country_of_origin': packingList.studio_goods_origin,
+
+        'invoice_user_id': salespersonId,
+        'team_id': salesTeamId,
+        'invoice_date': datetime.date.today(),
+        'date': datetime.date.today(),
+        'currency_id': currency_id.id,
+        'state': 'draft',
+        'move_type': 'out_invoice',
+        'invoice_origin': packingList.name,
+        'invoice_line_ids': invoiceLines,
+        'packing_list_id': packingList.id,
+        'invoice_payment_term_id': packingList.payment_terms_id.id,
+        'studio_tracking_number': packingList.tracking or "",
+        'studio_customer_po_numbers_1': ','.join([(o.studio_customer_po_number or o.name) for o in orders]),
+        'ref': ','.join([(o.studio_customer_po_number or o.name) for o in orders])
+    })
+
+def genInvoiceLines(packingList):
+    lines = packingList.line_ids
+    invoiceLines = []
+
+    for l in lines:
+        quantity = l.quantity
+        order_line = l.order_line_id
+        order = order_line.order_id
+        
+        invoiceLines.append((0, 0, {  
+            'product_id': order_line.product_id.id,
+            'quantity': quantity,
+            'name': ",".join([order_line.product_id.name," Order %s" % str(order.name)]),
+            'price_unit': order_line.price_unit,
+            'product_uom_id': order_line.product_uom.id,
+            'analytic_account_id': order_line.order_id.analytic_account_id.id,
+            # 'partner_id_order': order.client_order_ref,
+            # 'shipment_line_id': sl.id,  # this link invoice line with purchase order line
+            'sale_line_ids':[(4, order_line.id)],
+            # 'shipment_id': record.id
+            # 'exclude_from_invoice_tab': False,
+            # 'debit':record.studio_to_bill_balance
+        }))
+    return invoiceLines
+    
+
+
+# record = env['mjb_packing_list'].browse(31)
+if record:
+    validate(record)
+    invoice = createInvoice(record)
+
+    # Make the packing list as invoiced
+    record.write({
+        'stage_id': 6
+    })
+
+    if invoice:
+        record['invoice_date'] = datetime.date.today()
+        action = {
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model' : 'account.move',
+            'view_id': env.ref("account.view_move_form").id,
+            'res_id': invoice.id,
+            'type': 'ir.actions.act_window',
+            'target': 'current',
+            'nodestroy': True,
+            'context': {
+                'active_id': invoice.id
+            }
+        }
+    log("done")
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_update_pl" model="ir.actions.server">
+        <field name="name">Update PL</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="model_packing_list"/>
+        <field name="binding_model_id" ref="model_packing_list"/>
+        <field name="state">code</field>
+        <field name="code">records.action_update_pl()</field>
+    </record>
+
+    <record id="action_update_pl_line_title" model="ir.actions.server">
+        <field name="name">Update PL Line Title</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="model_packing_list"/>
+        <field name="binding_model_id" ref="model_packing_list"/>
+        <field name="state">code</field>
+        <field name="code">records.action_update_pl_line_title()</field>
+    </record>
+
+    <record id="external_packing_list_form_view" model="ir.ui.view">
+        <field name="name">packing.list</field>
+        <field name="model">packing.list</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button context="{'default_partner_id': customer,'default_order_id': orders,'default_target_packing_list': id,}" class="btn btn-secondary" string="Add to Packing List" type="object" name="add_to_pl"/>
+                    <field name="is_move_back_allowed" invisible="1" />
+                    <field name="is_packing_allowed" invisible="1" />
+                    <field name="is_loading_allowed" invisible="1" />
+                    <field name="is_review_allowed" invisible="1" />
+                    <field name="is_delivered_allowed" invisible="1" />
+                    <field name="stage_lock" invisible="1" />
+                    <button 
+                        class="btn btn-secondary"
+                        type="object" 
+                        name="move_forward" 
+                        string="Packing" 
+                        invisible="is_move_back_allowed != False"
+                    />
+                    <button 
+                        class="btn btn-secondary"
+                        type="object" 
+                        name="move_forward" 
+                        string="Loading" 
+                        invisible="is_packing_allowed != False"
+                    />
+                    <button 
+                        class="btn btn-secondary"
+                        type="object" 
+                        name="move_forward" 
+                        string="Review" 
+                        invisible="is_loading_allowed != False"
+                    />
+                    <button class="btn btn-secondary" string="Back" name="move_back" type="object" invisible="is_move_back_allowed != False" />
+                    <button  class="btn btn-secondary" string="Deliver" type="action" name="%(custom_delivery_auto_pl)d" confirm="Be careful, you are about to deliver the stock to the customer, are you sure ?"  invisible="is_review_allowed != False" />
+                    <button class="btn btn-secondary" string="Invoice" type="action" name="%(custom_invoice_auto_pl)d" confirm="Are you sure you want to invoice this packing list ?" invisible="is_delivered_allowed != False" />
+                    <field name="is_cancel_allowed" invisible="1" />
+                    <button class="btn btn-secondary" string="Cancel" name="button_cancel" type="object"  invisible="is_delivered_allowed == False" confirm="Are you sure you want to cancel this packing list ?" />
+                    <field name="stage_id" widget="statusbar" options="{'clickable': '1'}" invisible="stage_lock == True"/>
+                    <field name="stage_id_lock" widget="statusbar" invisible="stage_lock == False"/>
+                </header>
+                <sheet string="Packing List">
+                    <div class="oe_button_box" name="button_box">
+                        <button name="pl_display_so" type="object" class="oe_stat_button" icon="fa-dollar icon">
+                            <field name="packing_list_id__sales_order_count" string="Sales" widget="statinfo" />
+                        </button>
+                        <button class="oe_stat_button" icon="fa-sitemap" type="object" name="packing_list_id__mjb_packing_list_line">
+                            <field name="packing_list_id__mjb_packing_list_line_count" string="Lines" widget="statinfo"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-cubes" type="object" name="packing_list_id__stock_picking">
+                            <field name="packing_list_id__stock_picking_count" string="Deliveries" widget="statinfo" />
+                        </button>
+                        <button class="oe_stat_button" icon="fa-balance-scale" type="object" name="packing_list_id__account_move">
+                            <field name="packing_list_id__account_move_count" string="Invoices" widget="statinfo" />
+                        </button>
+                    </div>
+                    <field name="kanban_state" widget="state_selection" />
+                    <widget name="web_ribbon" text="Archived" bg_color="bg-danger" invisible="active == False"/>
+                    <field name="active" invisible="1" />
+                    <div class="oe_title">
+                        <h1>
+                            <field name="title"/>
+                            <field name="name" invisible="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code" readonly="1"/>
+                            <field name="ref"/>
+                            <field name="customer"/>
+                            <field name="delivery_address" domain="[[&quot;parent_id&quot;,&quot;=&quot;,customer]]" options="{&quot;no_create&quot;:true,&quot;no_open&quot;:true}"/>
+                            <field name="orders" widget="many2many_tags" domain="[('partner_id', '=',customer)]"  options="{&quot;no_create&quot;:true}"/>
+                            <field name="goods_origin"/>
+                            <field name="manufacturer_id" options="{&quot;no_create&quot;:true}"/>
+                            <field name="consignee" options="{&quot;no_create&quot;:true}"/>
+                            <field name="company_id" options="{&quot;no_create&quot;:true}"/>
+                        </group>
+                        <group>
+                            <field name="shipper" options="{&quot;no_create&quot;:true}"/>
+                            <field name="x_forwarder_id" options="{&quot;no_create&quot;:true}"/>
+                            <field name="port_from_id" options="{&quot;no_create&quot;:true}" />
+                            <field name="port_to_id" options="{&quot;no_create&quot;:true}" />
+                            <field name="date_loading"/>
+                            <field name="date_departure"/>
+                            <field name="invoice_date"/>
+                            <field name="ship_status"/>
+                            <field name="date_arrival"/>
+                            <field name="stage_lock" widget="boolean_toggle"/>
+                            <field name="create_date"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Lines">
+                            <field name="line_ids"/>
+                        </page>
+                        <page string="Tracking">
+                            <group>
+                                <group>
+                                    <field name="loading_ref"/>
+                                    <field name="vessel"/>
+                                    <field name="container_number"/>
+                                    <field name="tracking"/>
+                                    <field name="container_information"/>
+                                </group>
+                                <group>
+                                    <field name="tradelink_udr"/>
+                                    <field name="shipping_marks"/>
+                                    <field name="studio_vendor_pl" string="Vendor PL"/>
+                                    <field name="studio_vendor_po_no" string="Vendor PO No"/>
+                                    <field name="studio_inventory_site" string="Inventory Site"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Freight Charges">
+                            <group>
+                                <group>
+                                    <field name="estimated_freight_cost"/>
+                                    <field name="actual_freight_cost"/>
+                                    <field name="freight_prepaid" widget="boolean_toggle"/>
+                                    <field name="freight_invoiced_customer"/>
+                                </group>
+                                <group>
+                                    <field name="declare" widget="boolean_toggle"/>
+                                    <field name="local_charges" widget="boolean_toggle"/>
+                                    <field name="mate_receipt" widget="boolean_toggle"/>
+                                    <field name="payment_terms_id"/>
+                                    <field name="invoice_number"/>
+                                    <field name="incoterm"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes"/>
+                        </page>
+                        <page string="Others">
+                            <group>
+                                <group>
+                                    <field name="number_cartons"/>
+                                    <field name="total_nw"/>
+                                    <field name="total_quantity"/>
+                                    <field name="total_gw"/>
+                                    <field name="total_cbm"/>
+                                    <field name="total_amount"/>
+                                </group>
+                                <group>
+                                    <field name="active"/>
+                                    <field name="create_uid"/>
+                                    <field name="write_uid"/>
+                                    <field name="sequence"/>
+                                    <field name="create_date"/>
+                                    <field name="write_date"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter" name="oe_chatter">
+                    <field name="message_follower_ids" />
+                    <field name="message_ids" />
+                    <field name="activity_ids" />
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="external_packing_list_tree_view" model="ir.ui.view">
+        <field name="name">packing.list.tree.view</field>
+        <field name="model">packing.list</field>
+        <field name="arch" type="xml">
+            <tree string="Packing List">
+                <field name="sequence"/>
+                <field name="name" invisible="1"/>
+                <field name="create_date"  optional="hide"/>
+                <field name="code"/>
+                <field name="title"/>
+                <field name="studio_vendor_pl"/>
+                <field name="studio_vendor_po_no"/>
+                <field name="customer" />
+                <field name="orders" widget="many2many_tags" />
+                <field name="loading_ref" optional="hide"/>
+                <field name="vessel"  optional="hide"/>
+                <field name="container_number"  optional="hide"/>
+                <field name="container_information"  optional="hide"/>
+                <field name="goods_origin"  optional="hide"/>
+                <field name="shipping_marks"  optional="hide"/>
+                <field name="invoice_number"  optional="hide"/>
+                <field name="active" optional="hide"/>
+                <field name="id" optional="hide"/>
+                <field name="write_uid" optional="hide"/>
+                <field name="write_date" optional="hide"/>
+                <field name="date_loading"/>
+                <field name="date_departure" />
+                <field name="date_arrival"/>
+                <field name="stage_lock" widget="boolean_toggle"/>
+                <field name="invoice_date" optional="hide"/>
+                <field name="total_quantity" optional="hide"/>
+                <field name="number_cartons" optional="hide"/>
+                <field name="total_gw" optional="hide"/>
+                <field name="total_nw" optional="hide"/>
+                <field name="total_cbm" optional="hide"/>
+                <field name="shipper" options="{&quot;no_create&quot;:true}" optional="hide"/>
+                <field name="consignee" options="{&quot;no_create&quot;:true}" optional="hide"/>
+                <field name="incoterm" optional="hide"/>
+                <field name="payment_terms_id" optional="hide"/>
+                <field name="company_id" options="{&quot;no_create&quot;:true}" optional="hide"/>
+                <field name="port_from_id" optional="hide"/>
+                <field name="port_to_id" optional="hide"/>
+                <field name="stage_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="external_packing_list_kanban_view" model="ir.ui.view">
+        <field name="name">packing.list.kanban.view</field>
+        <field name="model">packing.list</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="stage_id" default_order="priority desc, sequence asc, id desc">
+                <progressbar field="kanban_state" colors="{'normal': 'muted', 'done': 'success', 'blocked': 'danger'}" />
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="o_kanban_record oe_kanban_global_click o_kanban_record_has_image_fill">
+                            <div class="o_kanban_record_details">
+                                <div class="o_kanban_record_top" name="studio_auto_kanban_top">
+                                    <div class="o_kanban_record_headings" name="studio_auto_kanban_headings">
+                                        <field name="priority" widget="boolean_favorite" nolabel="1" />
+                                        <strong class="o_kanban_record_title" name="studio_auto_kanban_title">
+                                            <field name="name" />
+                                            <field display="full" name="customer" />
+                                        </strong>
+                                    </div>
+                                    <div class="o_dropdown_kanban dropdown">
+                                        <a role="button" class="dropdown-toggle o-no-caret btn" data-toggle="dropdown" data-display="static" href="#" aria-label="Dropdown Menu" title="Dropdown Menu">
+                                            <span class="fa fa-ellipsis-v" />
+                                        </a>
+                                        <div class="dropdown-menu" role="menu">
+                                            <a t-if="widget.editable" role="menuitem" type="edit" class="dropdown-item">Edit
+                                            </a>
+                                            <a t-if="widget.deletable" role="menuitem" type="delete" class="dropdown-item">Delete
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body" name="studio_auto_kanban_body" />
+                                <div class="o_kanban_record_bottom" name="studio_auto_kanban_bottom">
+                                    <div class="oe_kanban_bottom_left" name="studio_auto_kanban_bottom_left" />
+                                    <div class="oe_kanban_bottom_right" name="studio_auto_kanban_bottom_right">
+                                        <field name="kanban_state" widget="state_selection" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="packing_list_action" model="ir.actions.act_window">
+        <field name="name">Packing List</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">packing.list</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a Packing List
+            </p>
+        </field>
+    </record>
+
+    <record id="inherited_view_external_packing_list_form_view" model="ir.ui.view">
+            <field name="name">inherited.packing.list.form</field>
+            <field name="model">packing.list</field>
+            <field name="inherit_id" ref="external_packing_list_form_view"/>
+            <field name="arch" type="xml">
+               <xpath expr="//field[@name='line_ids']" position="inside">
+                    <tree string="Packing List Line" create="0" editable="bottom">
+                    <field name="sequence" widget="handle"/>
+                    <button icon="fa-copy" class="text-warning" type="object" name="pll_duplicate" confirm="Are you sure to duplicate this line ?"/>
+                    <field name="studio_vendor_pl" string="Vendor PL" optional="hide"/>
+                    <field name="vendor_po_no" optional="hide"/>
+                    <field name="inventory_site" optional="hide"/>
+                    <field name="partner_id" optional="hide"/>
+                    <field name="order_id" readonly="1" optional="hide"/>
+                    <field name="order_ref"/>
+                    <field name="order_line_id" options="{&quot;no_create&quot;:true}" domain="[('order_id','in',parent.orders)]" attrs="{}" required="1"/>
+                    <field name="product_id" readonly="1" string="P/N"/>
+                    <field name="order_line_id_ref" class="btn btn-info" optional="hide"/>
+                    <field name="product_tmpl_id" optional="hide" readonly="1"/>
+                    <field name="customer_number" optional="show"/>
+                    <field name="description_text" optional="hide"/>
+                    <field name="name" invisible="1"/>
+                    <field name="create_date" invisible="1"/>
+                    <field name="code" invisible="1"/>
+                    <field name="all_shipped" invisible="1"/>
+                    <field name="barcode" invisible="1"/>
+                    <field name="id" invisible="1"/>
+                    <field name="quantity" optional="show" string="TOTAL QTY (PCS)" sum="Sum of TOTAL QTY (PCS)"/>
+                    <field name="order_remaining_qty" optional="show" string="REMAINING QTY (PCS)" sum="Sum of REMAINING QTY (PCS)"/>
+                    <field name="shipped_quantity" invisible="1" sum="Sum of Shipped Quantity"/>
+                    <field name="order_qty" optional="show" sum="Sum of Order Qty"/>
+                    <field name="order_delivered_qty" optional="hide" sum="Sum of Order Delivered Qty"/>
+                    <field name="size" invisible="1"/>
+                    <field name="ctn_type_id" string="Type CTN"/>
+                    <field name="qty_per_carton" string="Qty/CTN" optional="show"/>
+                    <field name="carton_quantity" string="Total CTN(s)" optional="show" sum="Sum of Total CTN(s)"/>
+                    <field name="inner_ctn_qty" string="Total Inner CTN(s)" optional="show" sum="Total inners"/>
+                    <field name="carton_start" string="Start CTN"/>
+                    <field name="carton_end" string="End CTN"/>
+                    <field name="product_net_weight" string="Product NW" optional="show"/>
+                    <field name="ctn_weight" string="Weight CTN" optional="show"/>
+                    <field name="gross_weight" optional="show" string="G.W./CTN (KGS)"/>
+                    <field name="total_gross_weight" optional="show" string="TOTAL G.W.(KG)" sum="Sum of TOTAL G.W.(KG)"/>
+                    <field name="net_weight" optional="hide"/>
+                    <field name="total_net_weight" optional="show" sum="Sum of Total Net Weight"/>
+                    <field name="length" string="LENGTH (cm)" optional="show"/>
+                    <field name="width" string="WIDTH (cm)" optional="show"/>
+                    <field name="height" string="HEIGHT (cm)" optional="show"/>
+                    <field name="ctn_cbm" string="CBM CTN" optional="show"/>
+                    <field name="total_cbm" optional="show" sum="Sum of Total Cbm"/>
+                    <field name="type_pallet_id" string="Type Pallet" optional="show"/>
+                    <field name="pallet_qty" string="Pallet Qty" optional="show" sum="Sum of Pallet Qty"/>
+                    <field name="pallet_gross_weight" string="Pallet G.W." optional="hide"/>
+                    <field name="pallet_net_weight" string="Pallet Weight" optional="show"/>
+                    <field name="pallet_length" string="Pallet LENGTH (cm)" optional="show"/>
+                    <field name="pallet_width" string="Pallet WIDTH (cm)" optional="show"/>
+                    <field name="pallet_height" string="Pallet HEIGHT (cm)" optional="show"/>
+                    <field name="pallet_cbm" string="CBM Pallet" optional="show"/>
+                    <field name="pallet_total_cbm" string="Pallet Total CBM" optional="show"/>
+                    <field name="pallet_description" string="Pallet Description" optional="hide"/>
+                    <field name="delivery_slip" optional="hide"/>
+                    <field name="unit_price" optional="show" string="U/P (USD)"/>
+                    <field name="total_amount" optional="show" string="Total (USD)" sum="Sum of Total (USD)"/>
+                    <field name="hs_code" optional="show"/>
+                    <field name="freight_prepaid" optional="hide"/>
+                    <field name="estimated_freight_cost" optional="hide"/>
+                    <field name="actual_freight_cost" optional="hide"/>
+                    <field name="freight_invoiced_customer" optional="hide"/>
+                    <field name="ship_status" optional="hide"/>
+                    <field name="tracking" optional="hide"/>
+                    <field name="active" invisible="1"/>
+                    <field name="packing_list_id" invisible="1"/>
+                    <field name="parent_line_id" invisible="1"/>
+                    <field name="distance_uom_id" invisible="1"/>
+                    <field name="weight_uom_id" invisible="1"/>
+                    <field name="write_uid" optional="hide"/>
+                    <field name="write_date" optional="hide"/>
+                    </tree>
+                </xpath>
+            </field>
+        </record>
+
+</odoo>

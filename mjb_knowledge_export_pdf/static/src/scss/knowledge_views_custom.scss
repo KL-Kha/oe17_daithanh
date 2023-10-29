@@ -1,0 +1,34 @@
+.o_knowledge_article_view_form_view {
+    .o_knowledge_sidebar {
+        transition: width 0.15s linear;
+        .o_article:not(.o_dragged) > div {
+            &.o_article_active > div {
+                background-color: rgba($knowledge-bg--active, 0.2);
+                &:hover {
+                    background-color: rgba($knowledge-bg--active, 0.3);
+                }
+                .o_article_export:hover {
+                    background-color: rgba($knowledge-bg--active, 0.4);
+                }
+                .o_article_export:active {
+                    background-color: rgba($knowledge-bg--active, 0.5);
+                }
+            }
+            &:not(.o_article_active) > div {
+                &:hover {
+                    background-color: rgba($knowledge-bg--hover, 0.3);
+                }
+                .o_article_export:hover {
+                    background-color: rgba($knowledge-bg--hover, 0.4);
+                }
+                .o_article_export:active {
+                    background-color: rgba($knowledge-bg--hover, 0.5);
+                }
+            }
+        }
+
+        .o_article_handle > div:not(:hover) .o_article_export {
+            visibility: hidden;
+        }
+    }
+}

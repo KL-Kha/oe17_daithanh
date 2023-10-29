@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="sequence_increase" model="ir.sequence">
+        <field name="name">Sequence</field>
+        <field name="code">sequence</field>
+        <field name="prefix"></field>
+        <field name="padding">4</field>
+    </record>
+</odoo>

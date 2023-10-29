@@ -1,0 +1,600 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="custom_delivery_auto_pl" model="ir.actions.server">
+        <field name="name">Deliver PL</field>
+        <field name="model_id" ref="model_packing_list"/>
+        <field name="state">code</field>
+        <field name="code">
+def alert(m):
+    raise(UserError(str(m)))
+
+def deliverPackingList(packingList):
+
+    # check if there are already done pickigns attached to this packing list
+    existingPickings = env['stock.picking'].search(
+        [('packing_list_id', '=', packingList.id),
+        ("state","!=","cancel")])
+    if len(existingPickings) > 0:
+        alert("There are already done pickings attached to this packing list!")
+        return False
+
+    # Useful variables
+    mainCompany = packingList.company_id
+    orders = packingList.orders
+    pickingList = []
+
+    # Check if this is a standard delivery (from stock - no multi company)
+    isStandard = True
+
+    # Aggregate order numbers and client ref for picking origin
+    if packingList.name:
+      origin = [str(packingList.name)]
+    else:
+      packingList.action_update_pl()
+      origin = [str(packingList.name)]
+      
+    if orders:
+        ordersKey = ["SHIPPED WITH FOLLOWING ORDERS:"]
+        for o in orders:
+            row = []
+            if o.client_order_ref:
+                row.append(o.client_order_ref)
+            row.append(o.name)
+            ordersKey.append("-".join(row))
+        orderKeys = "\n".join(ordersKey)
+    else:
+        # if no order, add a False one, just to avoid more if/then below - keeping the same format
+        orders = {
+            'id': False
+        }
+
+    # Standard: ship from stock to customer with partner = sale partner
+    if isStandard:
+        # origin.append('STD')
+
+        pickingList = foreachOrder({
+            'origin': " - ".join(origin),
+            'note': orderKeys,
+            'packing_list_id': packingList.id,
+            'partner_id': packingList.delivery_address,
+            'company_id': mainCompany
+        }, orders, pickingList, mainCompany)
+
+    # alert(pickingList)
+    pickings = generatePickings(pickingList, packingList)
+    return pickings
+
+# Add sale order ID if needed , to link to SO- one picking per SO
+
+
+def foreachOrder(obj, orders, pickingList, mainCompany):
+    for order in orders:
+        row = {}
+        row.update(obj)
+        row['sale_id'] = int(order['id'])
+        row['picking_type_id'] = order.warehouse_id.out_type_id
+        row['location_id'] = order.warehouse_id.out_type_id.default_location_src_id
+        row['location_dest_id'] = getLocation(
+            'customer', 'Customers', mainCompany)
+
+        # getLocation('internal', 'Stock', mainCompany, order.warehouse_id)
+        # getLocation('customer', 'Customers', mainCompany, warehouse)
+        #  getOperationType('outgoing', 'OUT', mainCompany, warehouse)
+
+        if row['sale_id']:
+            row['origin'] += ': ' + order.name
+            if order.client_order_ref:
+                row['origin'] += '/' + order.client_order_ref
+
+        pickingList.append(row)
+    return pickingList
+
+# Get location, with multi company
+
+
+def getLocation(usage, name, company):
+    domain = [
+        ('usage', '=', usage),
+        ('name', '=', name)
+    ]
+    if usage not in ['supplier', 'customer']:
+        domain.append(
+            ('company_id', '=', company.id)
+        )
+
+    res = env['stock.location'].sudo().with_context(
+        force_company=company.id).search(domain)
+    if len(res) > 0:
+        return res[0]
+    return res
+
+# Get operation type, with multi company
+
+
+def getOperationType(usage, code, company):
+    res = env['stock.picking.type'].sudo().with_context(force_company=company.id).search([
+        ('code', '=', usage),
+        ('sequence_code', '=', code),
+        ('company_id', '=', company.id)
+    ])
+    if len(res) > 0:
+        return res[0]
+    return res
+
+
+# Generate stock move attached to pickings
+def generateStockMoves(pickingDict, packingList):
+
+    pickingDict['move_lines'] = {}
+    needByProduct = {}
+    errors = []
+
+    for line in packingList.line_ids:
+        soline = line.order_line_id
+        product = line.product_id
+        uom = product.uom_id
+        qty = line.quantity
+
+        key = (soline.id)
+        subKey = (product.id)
+
+        if subKey not in needByProduct:
+            needByProduct[subKey] = {
+                "saleOrderLine": soline,
+                "product": product,
+                "qty": 0.0
+            }
+        needByProduct[subKey]['qty'] += qty
+
+        toProcess = product.type == 'product'
+
+        solineId = False
+        if soline:
+            if pickingDict['sale_id']:
+                # only process if the sale order of the picking is the same as the current soline
+                toProcess = toProcess and (
+                    pickingDict['sale_id'] == soline.order_id.id)
+
+                # only attach to the soline IF the picking has a sale_id
+                solineId = soline.id
+        
+        if toProcess:
+            if key not in pickingDict['move_lines']:
+                pickingDict['move_lines'][key] = (0, 0,
+                                                  {
+                                                      # 'picking_id': stockPicking.id,
+                                                      'product_id': product.id,
+                                                      'name': product.name,
+                                                      'product_uom': uom.id,
+                                                      'location_id': pickingDict['location_id'].id,
+                                                      # 'location_dest_id': pickingDict['location_dest_id'].id,
+                                                      'date': pickingDict['scheduled_date'],
+                                                      'company_id': pickingDict['company_id']['id'],
+                                                      # 'studio_packing_list_id': packingList.id,
+                                                      'reserved_uom_qty': 0.0,
+                                                      'sale_line_id': solineId,
+                                                      'move_line_ids': [(0, 0,
+                                                                         {
+                                                                             'product_id': product.id,
+                                                                             # 'lot_id': r.studio_product_lot_id.id,
+                                                                             'product_uom_id': uom.id,
+                                                                             'reserved_uom_qty': 0.0,
+                                                                             'company_id': pickingDict['company_id']['id'],
+                                                                             'date': pickingDict['scheduled_date'],
+                                                                             'qty_done': 0.0,
+                                                                             'location_id': pickingDict['location_id'].id,
+                                                                            # 'location_dest_id': pickingDict['location_dest_id'].id,
+                                                                         })
+                                                                        ]
+                                                  })
+            
+            pickingDict['move_lines'][key][2]['reserved_uom_qty'] += qty
+            pickingDict['move_lines'][key][2]['move_line_ids'][0][2]['qty_done'] += qty
+            
+        # else:
+        #     alert("Packing list line orders are not matching the one from the packing list !")
+
+    # # stockPicking = False
+    # shipment.write({
+    #     "studio_status": "Transit"
+    # })
+    # alert(pickingDict['move_lines'])
+    final = []
+    for key in pickingDict['move_lines']:
+        final.append(pickingDict['move_lines'][key])
+    pickingDict['move_lines'] = final
+    
+    
+    # alert(pickingDict['move_lines'])
+    log(" Added lines: %s" % str(len(pickingDict['move_lines'])))
+
+
+    stockErrors = []
+    for key in needByProduct:
+        saleOrderLine = needByProduct[key]['saleOrderLine']
+        product = needByProduct[key]['product']
+        qty = needByProduct[key]['qty']
+        # only process if the sale order of the picking is the same as the current soline
+        if saleOrderLine.order_id.id != pickingDict['sale_id']:
+            continue
+
+        location = saleOrderLine.order_id.warehouse_id.out_type_id.default_location_src_id
+        hasEnoughStock, missingQty = checkEnoughStock(product, location, qty)
+        if not hasEnoughStock:
+            stockErrors.append("Product %s does not have enough stock in location %s, missing qty %s" % (product.name, location.name, qty))
+
+    if len(stockErrors) >0:
+        alert("\n".join(stockErrors))
+    
+    return pickingDict
+
+def checkEnoughStock(product, location, qty):
+    hasEnoughStock = False
+    missingQty = 0.0
+
+
+    # get location
+    # shop, warehouse, location, compute_child
+    qties = product.with_context({
+        "location": location.id,
+    })._compute_quantities_dict(lot_id=False,owner_id=False,package_id=False,from_date=False, to_date=False)
+    hasEnoughStock = qties[product.id]['qty_available'] > 0
+    missingQty = qty - qties[product.id]['qty_available']
+    # check stock available in this location (quant)
+    # availableQuantity = env['stock.quant']._get_available_quantity(
+    #     move.product_id,
+    #     move.location_id,
+    #     lot_id=operation.lot_id,
+    #     strict=False,
+    # )
+    
+    return hasEnoughStock, missingQty
+
+def deepCleanPicking(domain):
+    toRemoves = env['stock.picking'].sudo().search(domain)
+    for toRemove in toRemoves:
+        # toRemove.sudo().move_lines.move_line_ids.write({
+        #     'state': 'draft',
+        #     'picking_id': toRemove.id
+        # })
+        # env.cr.commit()
+        toRemove.sudo().move_lines.move_line_ids.unlink()
+        # toRemove.sudo().move_lines.unlink()
+        # toRemove.sudo().action_cancel()
+        # toRemove.sudo().unlink()
+        log("Remove %s pickings" % str(toRemove.name))
+
+    return True
+
+# Generate pickings
+
+
+def fillStandardPickings(row):
+    pickings = []
+    withoutExistingMoves = []
+    for moveData in row['move_lines']:
+        # get so line and related stock moves
+        saleOrderLine = env['sale.order.line'].sudo().browse(
+            moveData[2]['sale_line_id'])
+        openStockMoves = env['stock.move'].sudo().search([
+            ("id", "in", saleOrderLine.move_ids.mapped("id")),
+            ("state", "not in", ["draft", "cancel", "done"])
+        ])
+
+        # if no open move, then still need to create a picking
+        if len(openStockMoves) == 0:
+            withoutExistingMoves.append(moveData)
+            continue
+
+        # clean current move lines
+        if len(openStockMoves.move_line_ids) > 0:
+            openStockMoves.move_line_ids.unlink()
+
+        openStockMoves.picking_id.do_unreserve()
+
+        # add new move lines
+        openStockMoves.write({
+            "move_line_ids": moveData[2]['move_line_ids']
+        })
+        env.cr.commit()
+        openStockMoves.move_line_ids.write({
+            "picking_id": openStockMoves.picking_id.id
+        })
+
+        # update its picking
+        openStockMoves.picking_id.write({
+            "origin": row['origin'],
+            "note": row['note'],
+            "packing_list_id": row['packing_list_id'],
+            "scheduled_date": row['scheduled_date']
+        })
+        pickings.append(openStockMoves.picking_id.id)
+
+    # provide remaining lines to add, and filled pickings
+    return withoutExistingMoves, pickings
+
+
+def generatePickings(pickingList, packingList):
+    log('')
+    log("[%s] Deliveries:" % (
+        str(packingList.name)
+    ))
+
+    # Debug
+    # deepCleanPicking([
+    #     ('name','=', 'HKBSK/OUT/00722')
+    # ])
+    # toRemoves = env['stock.picking'].sudo().search([
+    #     # '|',
+    #     # ('origin','=','AUTOMATED_TEST'),
+    #     # ('origin','ilike', ' - DRP')
+    #     ('name','=','HKBSK/OUT/00722')
+    # ])
+    # for toRemove in toRemoves:
+    #     # toRemove.write({
+    #     #     'state': 'cancel'
+    #     # })
+    #     # toRemove.sudo().move_lines.move_line_ids.write({
+    #     #     'state': 'draft',
+    #     #     'picking_id': toRemove.id
+    #     # })
+    #     # alert(toRemove.sudo().move_lines.move_line_ids)
+    #     toRemove.sudo().move_lines.move_line_ids.unlink()
+    #     # toRemove.sudo().move_lines.unlink()
+    #     # toRemove.sudo().action_cancel()
+    #     # toRemove.sudo().unlink()
+    #     log("Remove %s pickings" % str(toRemove.name))
+
+    # return []
+    # Generate pickings
+    pickings = []
+    for p in pickingList:
+        # add default values
+        row = {}
+        row.update(p)
+        row['scheduled_date'] = datetime.datetime.now()
+
+        # Log for ref
+        saleName = "False"
+        if p['sale_id']:
+            sale = env['sale.order'].browse(p['sale_id'])
+            saleName = sale.name
+        # alert(p)
+        log("[%s][%s] From [%s] %s --> [%s] %s: %s (Sale %s)" % (
+            str(p['company_id'].name),
+            str(p['picking_type_id'].name),
+            str(p['location_id'].id),
+            str(p['location_id'].name),
+            str(p['location_dest_id'].id),
+            str(p['location_dest_id'].name),
+            str(p['partner_id'].name),
+            str(saleName)
+        ))
+
+        # generate stock moves
+        row = generateStockMoves(row, packingList)
+        # alert(row)
+
+        # clean odoo objects
+        row['company_id'] = p['company_id']['id']
+        row['picking_type_id'] = p['picking_type_id']['id']
+        row['location_id'] = p['location_id']['id']
+        row['location_dest_id'] = p['location_dest_id']['id']
+        row['partner_id'] = p['partner_id']['id']
+
+        # create picking, only if there are stock moves to be done
+        # => an order could be selected on packing list though nothing is shipped
+        if len(row['move_lines']) > 0:
+            # alert(row)
+            # save partner companies to disable them temporarily (multi company restriction)
+            # partnerCompanies = {
+            #     'company_id': int(p['partner_id'].company_id.id),
+            #     'company_ids': [c.id for c in p['partner_id'].company_ids]
+            # }
+            # p['partner_id'].write({
+            #     'company_id': False,
+            #     'company_ids': False
+            # })
+            # env.cr.commit()
+
+            # wrap execution to catch error, to be able to reset partner company even in case of error
+            error = False
+            # alert(row)
+            # try:
+            # Check if it exists first:
+
+            # Fix FEB2022
+            # first check if there is an existing picking
+            # if no: create a new picking
+            # if yes:
+            # - fill it first, allow overship (packing list is the truth), validate with potential backorder
+            # - create a new picking for extra items
+
+            leftToShip, pickingIdsToConfirm = fillStandardPickings(row)
+
+            if len(leftToShip) == 0:
+                pickingsToConfirm = env['stock.picking'].sudo().browse(
+                    pickingIdsToConfirm)
+                for picking in pickingsToConfirm:
+
+                    confirmPicking(picking)
+
+                    if not picking.sale_id:
+                        picking.write({
+                            'sale_id': row['sale_id']
+                        })
+
+                    log("  picking %s" % picking.name)
+                    pickings.append(picking)
+
+            else:
+                row['move_lines'] = leftToShip
+
+                matches = env['stock.picking'].sudo().search([
+                    ('packing_list_id', '=', packingList.id),
+                    ('state', '!=', 'cancel')
+                ], limit=1)
+
+                if len(matches) == 0:
+                    # create it
+                    log(" Create picking: %s" % row['origin'])
+                    picking = env['stock.picking'].sudo().with_context(
+                        force_company=row['company_id']).create(row)
+                    env.cr.commit()
+
+                    picking.sudo().move_lines.move_line_ids.write({
+                        'picking_id': picking.id
+                    })
+                    env.cr.commit()
+
+                    pickingIdsToConfirm.append(picking.id)
+
+                    # get updated pickings
+                    pickingsToConfirm = env['stock.picking'].sudo().browse(
+                        pickingIdsToConfirm)
+                    for picking in pickingsToConfirm:
+
+                        confirmPicking(picking)
+
+                        if not picking.sale_id:
+                            picking.write({
+                                'sale_id': row['sale_id']
+                            })
+
+                        log("  picking %s" % picking.name)
+                        pickings.append(picking)
+                else:
+                    # alert(row)
+                    alert(" Picking already exist, skip: %s" % row['origin'])
+                    picking = matches[0]
+                    confirmPicking(picking)
+
+                    if not picking.sale_id:
+                        picking.write({
+                            'sale_id': row['sale_id']
+                        })
+
+                    pickings.append(picking)
+
+            # except Exception as e:
+            #     error = e
+
+            # reset companies
+            # p['partner_id'].write(partnerCompanies)
+            # env.cr.commit()
+
+            # output error if needed
+            if error:
+                alert(error)
+        else:
+            log(" No lines found, do not create picking")
+
+    return pickings
+
+
+def confirmPicking(picking):
+
+    if picking.state == 'draft':
+        picking.action_confirm()
+        env.cr.commit()
+
+    if picking.state not in ['done', 'cancel']:
+        # picking.do_unreserve()
+        # picking.action_assign()
+
+        res_dict = picking.button_validate()
+        # alert(res_dict)
+        # if picking have no more backorder, button_validate() will return True
+        if str(res_dict) != 'True':
+            wizard = env[(res_dict.get('res_model'))].browse(
+                res_dict.get('res_id')).with_context(res_dict['context'])
+            wizard.process()
+
+    return True
+
+# Validate if packing list can be delivered
+
+
+def validate(packingList):
+    if not packingList:
+        alert("You must select a packing list first")
+
+    if not packingList.customer:
+        alert("You must select a customer first")
+
+    if not packingList.delivery_address:
+        alert("You must select a delivery address first")
+
+    if not packingList.company_id:
+        alert("You must select a company first")
+
+
+
+    orderIds = [o.id for o in packingList.orders]
+    customers = packingList.orders.partner_id
+
+    nonSOItems = False
+    SOItems = False
+
+    for l in packingList.line_ids:
+
+        if l.quantity == 0:
+            alert("You must have positive quantities on each lines")
+
+        if l.order_line_id:
+            SOItems = True
+
+            if l.order_line_id.state not in ['done', 'sale']:
+                alert("You can only deliver confirmed sales orders")
+
+            if l.order_line_id.order_id.id not in orderIds:
+                alert("Line %s from order %s is not in the selected orders" % (str(
+                    l.order_line_id.name), str(l.order_line_id.order_id.name)))
+
+        else:
+            nonSOItems = True
+
+    if SOItems and nonSOItems:
+        alert("You cannot ship items without order. Please revise.")
+
+    if len(customers) > 1:
+        alert("You cannot ship to 2 customers at the same time !")
+
+    return True
+
+
+# Main function
+# if env.uid == 97:
+#   record = env['mjb_packing_list'].browse(432)
+
+# alert("OK ben")
+if record:
+    validate(record)
+    pickings = deliverPackingList(record)
+    # alert(pickings)
+
+    # # Make the packing list as delivered
+    record.write({
+        'stage_id': 5,
+        'stage_id_lock':5
+    })
+    log("done")
+
+    # if pickings:
+    #     action = {
+    #         'view_type': 'form',
+    #         'view_mode': 'form',
+    #         'res_model' : 'stock.picking',
+    #         'view_id': 1048,
+    #         'res_id': pickings[0].id,
+    #         'type': 'ir.actions.act_window',
+    #         'target': 'current',
+    #         'nodestroy': True,
+    #         'context': {
+    #             'active_id': pickings[0].id,
+    #         }
+    #     }
+# log("done")
+        </field>
+    </record>
+</odoo>

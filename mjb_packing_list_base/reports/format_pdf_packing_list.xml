@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+
+    <record id="format_pdf_packing_list" model="report.paperformat">
+        <field name="name">Standard PDF</field>
+        <field name="format">custom</field>
+        <field name="page_height">279</field>
+        <field name="page_width">216</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">12</field>
+        <field name="margin_bottom">24</field>
+        <field name="margin_left">11</field>
+        <field name="margin_right">10</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">5</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="report_mjb_pdf_headers_theme1_document" model="ir.ui.view">
+        <field name="name">report_mjb_pdf_headers_theme1_document</field>
+        <field name="type">qweb</field>
+        <field name="mode">primary</field>
+        <field name="arch" type="xml">
+            <template t-name="report_mjb_pdf_headers_theme1_document">
+                <div style="font-family: 'Roboto', sans-serif;">
+                    <t t-if="not o" t-set="o" t-value="doc"/>
+
+                    <t t-if="not company">
+                        <t t-if="company_id">
+                            <t t-set="company" t-value="company_id"/>
+                        </t>
+                        <t t-elif="o and 'company_id' in o and o.company_id.sudo()">
+                            <t t-set="company" t-value="o.company_id.sudo()"/>
+                        </t>
+                        <t t-if="x_company_id">
+                            <t t-set="company" t-value="x_company_id"/>
+                        </t>
+                        <t t-else="else">
+                            <t t-set="company" t-value="res_company"/>
+                        </t>
+                    </t>
+                      
+                    <table style="width: 100%; font-weight: 300;">
+                        <tr>
+                            <td style="width: 49%;">
+                                <img t-if="company.favicon" t-att-src="image_data_uri(company.favicon)" style="max-width: 62.5%; padding-left: 7pt" alt="Logo"/>
+                            </td>
+                            <td style="width: 26%; border-left: 0.75pt solid #A7A9AC; padding: 7pt 0pt 7pt 7pt; text-align: left; vertical-align: text-top; font-size: 10.5pt">
+                                <div style="color: #454B52" t-field="company.street"/>
+                                <div>
+                                    <span style="color: #454B52" t-esc="company.city + ','"/>
+                                    <span style="color: #454B52" t-field="company.state_id.code"/>
+                                    <span style="color: #454B52" t-field="company.zip"/>
+                                </div>
+                                <div style="color: #454B52" t-field="company.country_id.name"/>
+                            </td>
+                            <td style="width: 25%; border-left: 0.75pt solid #A7A9AC; padding: 7pt 0pt 7pt 7pt; text-align: left; vertical-align: text-top; font-size: 10.5pt">
+                                <div style="color: #454B52" t-field="company.phone"></div>
+                                <div style="color: #454B52" t-feild="company.website"></div>
+                                <div style="color: #454B52" t-field="company.email"></div>
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <hr style="display: block; border-top: 3pt solid #A7A9AC; margin-top: 19pt; margin-bottom: 24pt; border-left: 0pt; border-right: 0pt; border-bottom: 0pt;"/>
+                </div>
+                <div class="footer o_standard_footer" style="color: #A7A9AC; font-family: 'Roboto', sans-serif;">
+                    <div class="text-center" style="border-top: 1.5pt solid #A7A9AC;">
+                        <div t-if="report_type == 'pdf'" class="text-muted" style="margin-top: 7pt; text-align: center;">
+                            <span style="font-size: 10pt; font-weight: 300;" class="page"/> <span style="font-size: 10pt; font-weight: 300;">of</span> <span style="font-size: 10pt; font-weight: 300;" class="topage"/>
+                        </div>
+                    </div>
+                </div>
+                <t t-raw="0"/>
+            </template>
+        </field>
+    </record>
+</odoo>

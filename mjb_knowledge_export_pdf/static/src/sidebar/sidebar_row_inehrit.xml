@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="mjb_SidebarRowCustom" t-inherit="knowledge.SidebarRow" t-inherit-mode="extension">
+        <xpath expr="//a[@t-on-click='createChild']" position="before">
+            <a role="button" class="o_article_export p-1 opacity-75 opacity-100-hover" t-on-click="exportToPdf">
+                <i class="fa fa-fw fa-file-pdf-o" title="Export as PDF"/>
+            </a>
+            <a role="button" class="o_article_export p-1 opacity-75 opacity-100-hover" t-on-click="callActionReport">
+                <i class="fa fa-fw fa-file-pdf-o" title="Export as PDF"/>
+            </a>
+        </xpath>
+    </t>
+</templates>

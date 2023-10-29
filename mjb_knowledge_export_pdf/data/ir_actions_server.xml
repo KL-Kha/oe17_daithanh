@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="x_mjb_action_export_pdf" model="ir.actions.server">
+        <field name="name">MJB - Knowledge Article Default Report</field>
+        <field name="model_id" ref="knowledge.model_knowledge_article"/>
+        <field name="state">code</field>
+        <field name="code">
+raise(UserError('test'))
+        </field>
+    </record>
+</odoo>

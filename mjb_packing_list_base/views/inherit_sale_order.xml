@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="inherited_view_order_form" model="ir.ui.view">
+            <field name="name">inherited.view_order.form</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//header" position="inside">
+                    <button
+                        context="{'default_partner_id': partner_id, 'default_order_id': id}"
+                        name="%(add_to_packing_list_wizard_action)d" 
+                        type="action"
+                        string="Packing List" 
+                        class="btn-primary"
+                    />
+                </xpath>
+                <xpath expr="//button[@name='action_view_invoice']" position="after">
+                    <button type="object" name="sale_order__packing_list" class="oe_stat_button" icon="fa-truck" invisible="state not in ['sale']">
+                        <field name="so__y_count" widget="statinfo" string="Packing List"/>
+                    </button>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

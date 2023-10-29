@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="x_mjb_pll_carton_type" model="base.automation">
+        <field name="name">MJB - PLL | onChange | Carton Type</field>
+        <field name="model_id" ref="mjb_packing_list_base.model_packing_list_line"/>
+        <field name="active">1</field>
+        <field name="trigger">on_create_or_write</field>
+        <field name="trigger_field_ids" eval="[(4, ref('mjb_packing_list_base.field_packing_list_line__ctn_type_id'))]"/>
+        <field name="action_server_ids" eval="[(4, ref('mjb_packing_list_base.action_x_mjb_pll_carton_type'))]"/>
+    </record>
+
+    <record id="x_mjb_pll_onchange_sale_order_line" model="base.automation">
+        <field name="name">MJB - PLL | onChange | Sale Order Line</field>
+        <field name="model_id" ref="mjb_packing_list_base.model_packing_list_line"/>
+        <field name="active">1</field>
+        <field name="trigger">on_create_or_write</field>
+        <field name="trigger_field_ids" eval="[(4, ref('mjb_packing_list_base.field_packing_list_line__order_line_id'))]"/>
+        <field name="action_server_ids" eval="[(4, ref('mjb_packing_list_base.action_x_mjb_pll_onchange_sale_order_line'))]"/>
+    </record>
+
+    <record id="x_mjb_pll_nwgw_change" model="base.automation">
+        <field name="name">MJB - PLL | onChange | NW/GW</field>
+        <field name="model_id" ref="mjb_packing_list_base.model_packing_list_line"/>
+        <field name="active">1</field>
+        <field name="trigger">on_create_or_write</field>
+        <field name="trigger_field_ids" eval="[(4, ref('mjb_packing_list_base.field_packing_list_line__carton_quantity')),(4, ref('mjb_packing_list_base.field_packing_list_line__ctn_weight')),(4, ref('mjb_packing_list_base.field_packing_list_line__pallet_height')),(4, ref('mjb_packing_list_base.field_packing_list_line__pallet_gross_weight')),(4, ref('mjb_packing_list_base.field_packing_list_line__pallet_qty')),(4, ref('mjb_packing_list_base.field_packing_list_line__product_net_weight')),(4, ref('mjb_packing_list_base.field_packing_list_line__qty_per_carton'))]"/>
+        <field name="action_server_ids" eval="[(4, ref('mjb_packing_list_base.action_x_mjb_pll_nwgw_change'))]"/>
+    </record>
+
+    <record id="x_mjb_pll_onchange_carton_cbm" model="base.automation">
+        <field name="name">MJB - PLL | onChange | Carton CBM</field>
+        <field name="model_id" ref="mjb_packing_list_base.model_packing_list_line"/>
+        <field name="active">1</field>
+        <field name="trigger">on_create_or_write</field>
+        <field name="trigger_field_ids" eval="[(4, ref('mjb_packing_list_base.field_packing_list_line__carton_quantity')),(4, ref('mjb_packing_list_base.field_packing_list_line__height')),(4, ref('mjb_packing_list_base.field_packing_list_line__length')),(4, ref('mjb_packing_list_base.field_packing_list_line__width'))]"/>
+        <field name="action_server_ids" eval="[(4, ref('mjb_packing_list_base.action_x_mjb_pll_onchange_carton_cbm'))]"/>
+    </record>
+
+    <record id="x_mjb_pll_onchange_quantities" model="base.automation">
+        <field name="name">MJB - PLL | onChange | Quantities</field>
+        <field name="model_id" ref="mjb_packing_list_base.model_packing_list_line"/>
+        <field name="active">1</field>
+        <field name="trigger">on_create_or_write</field>
+        <field name="trigger_field_ids" eval="[(4, ref('mjb_packing_list_base.field_packing_list_line__qty_per_carton')),(4, ref('mjb_packing_list_base.field_packing_list_line__quantity')),]"/>
+        <field name="action_server_ids" eval="[(4, ref('mjb_packing_list_base.action_x_mjb_pll_onchange_quantities'))]"/>
+    </record>
+
+    <record id="x_mjb_pll_onchange_pallet_cbm" model="base.automation">
+        <field name="name">MJB - PLL | onChange | Pallet CBM</field>
+        <field name="model_id" ref="mjb_packing_list_base.model_packing_list_line"/>
+        <field name="active">1</field>
+        <field name="trigger">on_create_or_write</field>
+        <field name="trigger_field_ids" eval="[(4, ref('mjb_packing_list_base.field_packing_list_line__pallet_height')),(4, ref('mjb_packing_list_base.field_packing_list_line__pallet_qty')),(4, ref('mjb_packing_list_base.field_packing_list_line__pallet_length')),(4, ref('mjb_packing_list_base.field_packing_list_line__pallet_width'))]"/>
+        <field name="action_server_ids" eval="[(4, ref('mjb_packing_list_base.action_x_mjb_pll_onchange_pallet_cbm'))]"/>
+    </record>
+
+    <record id="x_mjb_pll_onchange_pallet_type" model="base.automation">
+        <field name="name">MJB - PLL | onChange | Pallet Type</field>
+        <field name="model_id" ref="mjb_packing_list_base.model_packing_list_line"/>
+        <field name="active">1</field>
+        <field name="trigger">on_create_or_write</field>
+        <field name="trigger_field_ids" eval="[(4, ref('mjb_packing_list_base.field_packing_list_line__type_pallet_id'))]"/>
+        <field name="action_server_ids" eval="[(4, ref('mjb_packing_list_base.action_x_mjb_pll_onchange_pallet_type'))]"/>
+    </record>
+
+    <record id="x_mjb_pll_onchange_total_cbm" model="base.automation">
+        <field name="name">MJB - PLL | onChange | Total CBM</field>
+        <field name="model_id" ref="mjb_packing_list_base.model_packing_list_line"/>
+        <field name="active">1</field>
+        <field name="trigger">on_create_or_write</field>
+        <field name="trigger_field_ids" eval="[(4, ref('mjb_packing_list_base.field_packing_list_line__ctn_total_cbm')),(4, ref('mjb_packing_list_base.field_packing_list_line__pallet_qty')),(4, ref('mjb_packing_list_base.field_packing_list_line__pallet_total_cbm'))]"/>
+        <field name="action_server_ids" eval="[(4, ref('mjb_packing_list_base.action_x_mjb_pll_onchange_total_cbm'))]"/>
+    </record>
+</odoo>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="so_to_packing_list_wizard_form_view" model="ir.ui.view">
+        <field name="name">so.to.packing.list.wizard.form.view</field>
+        <field name="model">so.to.packing.list.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Order to packing list">
+                <h4>When you click confirm, it will create a new packing list with the lines you selected.<br/>If you
+                    select an existing packing list, it will add the lines to it.
+                </h4>
+                <group>
+                    <field name="name" invisible="1"/>
+                    <field name="partner_id" string="Customer" readonly="1"/>
+                    <field name="order_id" string="Order" options="{'no_create':true}"
+                           domain="[('partner_id','=',partner_id)]" required="1"/>
+                    <field name="target_packing_list" string="Add to Packing List"
+                           options="{'no_create':true}"/>
+<!--                           domain="[('studio_customer','=',partner_id)]"-->
+                </group>
+                <field name="order_line_ids" domain="[('order_id','=',order_id)]">
+                    <tree string="Sales Order Lines" create="false">
+                        <field name="order_id"/>
+                        <field name="name"/>
+                        <field name="product_uom_qty" string="Qty"/>
+                        <field name="price_unit" string="Price"/>
+                        <field name="price_subtotal" sum="Total" widget="monetary"/>
+                        <field name="currency_id" invisible="1"/>
+                    </tree>
+                </field>
+                <footer>
+<!--                    <button name="747" string="Confirm" type="action" class="btn-primary"/>-->
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="so_to_packing_list_wizard_action" model="ir.actions.act_window">
+        <field name="name">Sale to Picking</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">so.to.packing.list.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="so_to_packing_list_wizard_form_view"/>
+        <field name="target">new</field>
+    </record>
+<!-- 
+    <menuitem id="so_to_packing_list_wizard_menu"
+          name="Purchase to Packing"
+          action="so_to_packing_list_wizard_action"
+          parent="packing_list_sheet_menu"
+          sequence="0"/> -->
+
+</odoo>
