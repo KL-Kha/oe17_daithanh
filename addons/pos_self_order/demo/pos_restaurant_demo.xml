@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<odoo>
+    <data noupdate="1">
+        <record id="pos_restaurant.pos_config_main_restaurant" model="pos.config">
+            <field name="self_ordering_mode">mobile</field>
+        </record>
+    </data>
+</odoo>

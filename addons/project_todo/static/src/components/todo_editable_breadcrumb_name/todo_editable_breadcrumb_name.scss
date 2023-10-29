@@ -1,0 +1,33 @@
+.o_todo_breadcrumb_name_input{
+    width: 100%;
+    text-overflow: clip;
+    overflow: hidden;
+    border: none;
+    padding: 0px 5px 0px 2px;
+    color: $o-gray-700;
+    border-bottom: $input-border-width solid transparent;
+    transition: border-color 0.3s;
+
+    &:hover {
+        border-bottom-color: $o-brand-primary;
+    }
+
+    &:focus {
+        outline: 1px solid #ccc;
+        outline-offset: -1px;
+        color: $dark;
+    }
+
+    &.o-todo-untitled {
+        font-style: italic;
+    }
+
+    &.o-todo-untitled:focus {
+        font-style: normal;
+    }
+
+    &:disabled {
+        background-color: inherit;
+    }
+}
+

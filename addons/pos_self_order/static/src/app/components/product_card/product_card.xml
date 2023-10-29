@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="pos_self_order.ProductCard">
+        <div class="col-sm-6 col-md-4 col-lg-3 col-xxl-2 p-2">
+            <button class="self_order_product_card btn btn-light m-0 overflow-hidden border fw-bolder"
+                t-on-click="selectProduct"
+                t-ref="selfProductCard">
+                <img
+                    class="o_self_order_item_card_image rounded bg-view"
+                    t-attf-src="/menu/get-image/{{ props.product.id }}/512?unique={{props.product.write_date}}"
+                    alt="Product image"
+                    loading="lazy"
+                    onerror="this.remove()" />
+                <div class="product-infos d-flex flex-column justify-content-between text-start flex-grow-1 px-2 mt-3 mb-1">
+                    <span t-esc="props.product.name" class="fs-3 fw-bolder flex-grow-1 lh-sm" />
+                    <div class="d-flex justify-content-between align-items-end gap-3">
+                        <span t-esc="selfOrder.formatMonetary(props.product.prices)" class="fs-4 text-muted flex-grow-1" />
+                        <div class="text-center ms-2 fs-lighter">
+                            <div t-if="!props.product.self_order_available" class="fs-lighter bg-secondary rounded">Out of stock</div>
+                        </div>
+                    </div>
+                </div>
+            </button>
+        </div>
+    </t>
+</templates>
