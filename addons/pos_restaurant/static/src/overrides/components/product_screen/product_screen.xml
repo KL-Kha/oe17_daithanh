@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="pos_restaurant.ProductScreen" t-inherit="point_of_sale.ProductScreen" t-inherit-mode="extension">
+        <!-- add a showOrderButton here (using the computeOrderChange method) -->
+        <xpath expr="//button[hasclass('pay-button')]" position="replace">
+            <button
+                t-if="this.swapButton"
+                class="btn-switchpane btn btn-primary flex-fill rounded-0 fw-bolder py-3"
+                t-on-click="submitOrder"
+                t-att-class="{'primary': primaryPayButton(), 'secondary': !primaryPayButton()}">
+                <!-- Replace the payment button by the order button -->
+                <span class="fs-1 d-block">Order</span>
+                <span><t t-esc="total"/></span>
+            </button>
+            <t t-else="">
+                <button 
+                    class="btn-switchpane btn btn-primary flex-fill rounded-0 fw-bolder py-3" 
+                    t-att-class="{'primary': primaryPayButton(), 'secondary': !primaryPayButton()}"
+                    t-on-click="() => currentOrder.pay()">
+                    <span class="fs-1 d-block">Pay</span>
+                    <span><t t-esc="total" /></span>
+                </button>
+            </t>
+        </xpath>
+        <xpath expr="//Orderline" position="attributes">
+            <attribute name="t-on-dblclick">
+                () => line.toggleSkipChange()
+            </attribute>
+        </xpath>
+    </t>
+</templates>
