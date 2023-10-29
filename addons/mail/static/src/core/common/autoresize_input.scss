@@ -1,9 +1,0 @@
-.o-mail-AutoresizeInput:not([disabled]):focus {
-    @extend .border-dark;
-    @extend .bg-white;
-}
-
-.o-mail-AutoresizeInput:not([disabled]):hover {
-    @extend .bg-white;
-    @extend .border;
-}
