@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates>
+    <t t-name="account_reports.AccountReportFilterAnalytic">
+        <Dropdown togglerClass="'btn btn-secondary'">
+            <t t-set-slot="toggler">
+                <i class="fa fa-folder-open me-1"/>Analytic Filter
+            </t>
+
+            <div class="dropdown-item">
+                <label>Accounts</label>
+                <Record t-props="recordProps('Accounts', 'account.analytic.account', 'analytic_accounts')" t-slot-scope="data">
+                    <Many2ManyTagsField id="'record_data'" name="'record_data'" record="data.record"/>
+                </Record>
+            </div>
+        </Dropdown>
+    </t>
+</templates>

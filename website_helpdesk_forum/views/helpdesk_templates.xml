@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="knowledge_base_forum_card" inherit_id="website_helpdesk.knowledge_base">
+        <xpath expr="//div[@id='o_knowledge_base_sections']" position="inside">
+            <t t-set="hide_community_button" t-value="True"/>
+            <div class="col-lg-4 pt32 pb32 text-center o_colored_level" t-if="team.show_knowledge_base_forum">
+                <i class="fa fa-3x rounded bg-secondary m-3 fa-comments fa-3x rounded bg-secondary m-3">​</i>
+                <h3>
+                    <span style="font-weight: bolder; font-size: 18px;">Community</span>
+                </h3>
+                <p>
+                    <span style="font-size: 18px;">Ask questions and discuss tips with fellow members in a forum</span>
+                </p>
+                <a t-attf-href="/helpdesk/{{ slug(team) }}/forums" class="btn btn-outline-primary" data-bs-original-title="" title="">Ask the Community</a>
+            </div>
+        </xpath>
+    </template>
+
+    <template id="footer" inherit_id="website_helpdesk.footer">
+        <xpath expr="//p[@id='footer_buttons']" position="inside">
+            <a class="btn btn-secondary btn-lg mb-2" href="/forum" t-if="team.use_website_helpdesk_forum and not hide_community_button">Ask the Community</a>
+        </xpath>
+    </template>
+</odoo>
